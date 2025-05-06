@@ -18,7 +18,7 @@ public class FileEvent {
         this.myEventType = theEventType;
         this.myEventTime = theEventTime;
     }
-  
+
     public String getFileName() {
         return myFileName;
     }
