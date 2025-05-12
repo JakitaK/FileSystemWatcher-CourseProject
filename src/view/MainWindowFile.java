@@ -1,20 +1,26 @@
 package view;
 
 import model.FileEvent;
+import model.DatabaseManager;
+import controller.FileMonitor;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
+import java.time.format.DateTimeFormatter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.IOException;
 
 /**
  * Main application window for the File System Watcher.
  */
-public class MainWindowFile extends JFrame {
+public class MainWindowFile extends JFrame implements PropertyChangeListener {
 
     private JComboBox<String> myExtensionComboBox;
     private JTextField myDirectoryField;
@@ -26,6 +32,8 @@ public class MainWindowFile extends JFrame {
     private JButton myBrowseButton;
     private JTable myFileTable;
     private DefaultTableModel myTableModel;
+    private JLabel myStatusLabel;
+    FileMonitor myFileMonitor;
 
     private final List<FileEvent> myFileEvents = new ArrayList<>();
 
@@ -54,9 +62,9 @@ public class MainWindowFile extends JFrame {
         mainPanel.add(tablePanel, BorderLayout.CENTER);
         add(mainPanel, BorderLayout.CENTER);
 
-        JLabel statusLabel = new JLabel("Database not connected.");
-        statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        add(statusLabel, BorderLayout.SOUTH);
+        myStatusLabel = new JLabel("Database not connected.");
+        myStatusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        add(myStatusLabel, BorderLayout.SOUTH);
     }
 
     /**
@@ -88,6 +96,16 @@ public class MainWindowFile extends JFrame {
         aboutMenu.add(aboutItem);
         menuBar.add(aboutMenu);
 
+        JMenu databaseMenu = new JMenu("Database");
+        JMenuItem connectItem = new JMenuItem("Connect to DataBase");
+        connectItem.addActionListener(e -> {
+            DatabaseManager myDatabaseManager = new DatabaseManager("data/file_events.db");
+            //JOptionPane.showMessageDialog(this, "Database connected successfully.");
+            myStatusLabel.setText("Database is connected.");
+        });
+        databaseMenu.add(connectItem);
+        menuBar.add(databaseMenu);
+
         menuBar.add(new JMenu("Email"));
         menuBar.add(new JMenu("Help"));
 
@@ -105,14 +123,40 @@ public class MainWindowFile extends JFrame {
         JPanel extensionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         extensionPanel.add(new JLabel("Monitor by extension:"));
         myExtensionComboBox = new JComboBox<>(new String[] {
-                "All extensions", "Custom extension", ".txt", ".java", ".pdf", ".doc", ".png", ".log"
+                "All extensions", "Custom extension",".txt", ".java", ".pdf", ".doc", ".png", ".log"
         });
+
+        myExtensionComboBox.addActionListener(e -> {
+            String selected = (String) myExtensionComboBox.getSelectedItem();
+            if ("Custom extension".equals(selected)) {
+                String input = JOptionPane.showInputDialog(this,
+                        "Enter your custom file extension (e.g., .log, .csv):",
+                        ".custom");
+                if (input != null && input.startsWith(".")) {
+                    myExtensionComboBox.insertItemAt(input, 2); // inserts under 'Custom extension'
+                    myExtensionComboBox.setSelectedItem(input); // selects the new value
+                } else if (input != null) {
+                    JOptionPane.showMessageDialog(this,
+                            "Invalid extension. It should start with a dot (e.g., .csv).",
+                            "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                    myExtensionComboBox.setSelectedIndex(0); // Reset to 'All extensions'
+                }
+            }
+        });
+
         extensionPanel.add(myExtensionComboBox);
 
         JPanel dirPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         dirPanel.add(new JLabel("Directory to monitor:"));
         myDirectoryField = new JTextField(35);
         myBrowseButton = new JButton("Browse");
+        myBrowseButton.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                myDirectoryField.setText(chooser.getSelectedFile().getAbsolutePath());
+            }
+        });
         dirPanel.add(myDirectoryField);
         dirPanel.add(myBrowseButton);
 
@@ -131,7 +175,58 @@ public class MainWindowFile extends JFrame {
             buttonPanel.add(button);
         }
 
+        myBrowseButton = new JButton("Browse");
+        myBrowseButton.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                myDirectoryField.setText(chooser.getSelectedFile().getAbsolutePath());
+            }
+        });
+
         myStopButton.setEnabled(false);
+
+        myStartButton.addActionListener(e -> {
+            try {
+                String dir = myDirectoryField.getText();
+                List<String> extensions = new ArrayList<>();
+                String selected = (String) myExtensionComboBox.getSelectedItem();
+                if (selected != null && !selected.equals("All extensions")) {
+                    extensions.add(selected);
+                }
+                myFileMonitor = new FileMonitor(extensions);
+                myFileMonitor.addPropertyChangeListener(this);
+                myFileMonitor.startMonitoring(dir);
+                myStartButton.setEnabled(false);
+                myStopButton.setEnabled(true);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error starting monitor: " + ex.getMessage());
+            }
+        });
+
+        myStopButton.addActionListener(e -> {
+            try {
+                if (myFileMonitor != null) {
+                    myFileMonitor.stopMonitoring();
+                    myStartButton.setEnabled(true);
+                    myStopButton.setEnabled(false);
+                }
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error stopping monitor: " + ex.getMessage());
+            }
+        });
+
+        myResetButton.addActionListener(e -> {
+            int result = JOptionPane.showConfirmDialog(this,
+                    "Are you sure you want to reset the file events?",
+                    "Confirm Reset", JOptionPane.YES_NO_OPTION);
+            if (result == JOptionPane.YES_OPTION) {
+                myFileEvents.clear();
+                myTableModel.setRowCount(0);
+            }
+        });
+
+
         myQueryButton.addActionListener(e -> openQueryWindow());
 
         panel.add(extensionPanel);
@@ -146,10 +241,17 @@ public class MainWindowFile extends JFrame {
      */
     private JScrollPane buildTablePanel() {
         myTableModel = new DefaultTableModel(new String[] {
-                "File Name", "Path", "Extension", "Date", "Time"
+                "File Name", "Path","Extension", "Date", "Time"
         }, 0);
         myFileTable = new JTable(myTableModel);
         myFileTable.setBackground(Color.WHITE);
+
+        //Setting preferred column width
+        myFileTable.getColumnModel().getColumn(0).setPreferredWidth(120); // File Name
+        myFileTable.getColumnModel().getColumn(1).setPreferredWidth(350); // Path
+        myFileTable.getColumnModel().getColumn(2).setPreferredWidth(70);  // Extension
+        myFileTable.getColumnModel().getColumn(3).setPreferredWidth(90);  // Date
+        myFileTable.getColumnModel().getColumn(4).setPreferredWidth(90);  // Time
 
         DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
         leftRenderer.setHorizontalAlignment(SwingConstants.LEFT);
@@ -196,5 +298,24 @@ public class MainWindowFile extends JFrame {
         queryFrame.setSize(900, 500);
         queryFrame.setLocationRelativeTo(this);
         queryFrame.setVisible(true);
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if ("fileEvent".equals(evt.getPropertyName())) {
+            FileEvent event = (FileEvent) evt.getNewValue();
+            myFileEvents.add(event);
+            String myFormattedDate = event.getEventTime().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));;
+            String myFormattedTime = event.getEventTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));;
+            myTableModel.addRow(new Object[]{
+                    event.getFileName(),
+                    event.getFilePath(),
+                    event.getFileExtension(),
+                    myFormattedDate,
+                    myFormattedTime,
+
+            });
+        }
+
     }
 }
