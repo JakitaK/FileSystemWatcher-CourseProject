@@ -126,6 +126,11 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                 "All extensions", "Custom extension",".txt", ".java", ".pdf", ".doc", ".png", ".log"
         });
 
+        myExtensionComboBox.setBackground(Color.WHITE);
+        //(optional if you want to change the color of the text from that grey to a black)
+        // myExtensionComboBox.setForeground(Color.BLACK);
+
+
         myExtensionComboBox.addActionListener(e -> {
             String selected = (String) myExtensionComboBox.getSelectedItem();
             if ("Custom extension".equals(selected)) {
@@ -150,6 +155,12 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         dirPanel.add(new JLabel("Directory to monitor:"));
         myDirectoryField = new JTextField(35);
         myBrowseButton = new JButton("Browse");
+
+        //changes to the Browse button cosmetically
+        myBrowseButton.setBackground(Color.BLACK);
+        myBrowseButton.setForeground(Color.WHITE);
+        myBrowseButton.setFocusPainted(false);
+
         myBrowseButton.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -241,7 +252,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
      */
     private JScrollPane buildTablePanel() {
         myTableModel = new DefaultTableModel(new String[] {
-                "File Name", "Path","Extension", "Date", "Time"
+                "File Name", "Path","Extension","Event", "Date", "Time"
         }, 0);
         myFileTable = new JTable(myTableModel);
         myFileTable.setBackground(Color.WHITE);
@@ -300,6 +311,15 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         queryFrame.setVisible(true);
     }
 
+    private String formatEventType(String rawType) {
+        return switch (rawType) {
+            case "ENTRY_CREATE" -> "Created";
+            case "ENTRY_MODIFY" -> "Modified";
+            case "ENTRY_DELETE" -> "Deleted";
+            default -> rawType;
+        };
+    }
+
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if ("fileEvent".equals(evt.getPropertyName())) {
@@ -311,6 +331,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                     event.getFileName(),
                     event.getFilePath(),
                     event.getFileExtension(),
+                    formatEventType(event.getEventType()),
                     myFormattedDate,
                     myFormattedTime,
 
