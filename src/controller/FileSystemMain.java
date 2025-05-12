@@ -10,7 +10,7 @@ public class FileSystemMain {
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                /*
+                 /*
                 // Placeholder main window panel (not yet implemented)
                 JPanel mainPanel = new JPanel();
                 mainPanel.add(new JLabel("Main Window - Under Construction"));
@@ -38,6 +38,7 @@ public class FileSystemMain {
                 mainWindow.setSize(900, 600);
                 mainWindow.setLocationRelativeTo(null);
                 mainWindow.setVisible(true);
+
             }
         });
     }
