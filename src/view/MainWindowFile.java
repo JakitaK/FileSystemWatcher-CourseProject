@@ -90,11 +90,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         fileMenu.add(exitItem);
         menuBar.add(fileMenu);
 
-        JMenu aboutMenu = new JMenu("About");
-        JMenuItem aboutItem = new JMenuItem("About this app");
-        aboutItem.addActionListener(e -> showAboutDialog());
-        aboutMenu.add(aboutItem);
-        menuBar.add(aboutMenu);
+
 
         JMenu databaseMenu = new JMenu("Database");
         JMenuItem connectItem = new JMenuItem("Connect to DataBase");
@@ -107,7 +103,13 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         menuBar.add(databaseMenu);
 
         menuBar.add(new JMenu("Email"));
-        menuBar.add(new JMenu("Help"));
+
+        JMenu aboutMenu = new JMenu("About");
+        JMenuItem aboutItem = new JMenuItem("About this app");
+        aboutItem.addActionListener(e -> showAboutDialog());
+        aboutMenu.add(aboutItem);
+        menuBar.add(aboutMenu);
+
 
         return menuBar;
     }
