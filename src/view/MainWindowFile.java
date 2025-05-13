@@ -105,7 +105,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
 
         menuBar.add(new JMenu("Email"));
 
-        JMenu aboutMenu = new JMenu("About");
+        JMenu aboutMenu = new JMenu("Help");
         JMenuItem aboutItem = new JMenuItem("About this app");
         aboutItem.addActionListener(e -> showAboutDialog());
         aboutMenu.add(aboutItem);

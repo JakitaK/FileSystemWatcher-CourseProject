@@ -26,6 +26,12 @@ public class DatabaseManager {
         }
     }
 
+    // for the reset funcitonaly for the query window
+    public Connection getConnection() {
+        return myConnection;
+    }
+
+
 
     private void createTableIfNeeded() {
         final String sql = """
