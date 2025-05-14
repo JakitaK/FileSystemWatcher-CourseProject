@@ -87,4 +87,33 @@ public class DatabaseManager {
             e.printStackTrace();
         }
     }
+
+    public ResultSet queryAllRows() {
+        try {
+            String sql = "SELECT file_name, file_path, file_extension, event_type, date || ' ' || time AS datetime FROM file_events";
+            Statement stmt = myConnection.createStatement();
+            return stmt.executeQuery(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public ResultSet queryTop5() {
+        try {
+            String sql = """
+            SELECT file_name, file_path, file_extension, event_type,
+                   date || ' ' || time AS datetime
+            FROM file_events
+            ORDER BY date DESC, time DESC
+            LIMIT 5
+        """;
+            Statement stmt = myConnection.createStatement();
+            return stmt.executeQuery(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 }
