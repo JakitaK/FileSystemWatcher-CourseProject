@@ -23,6 +23,7 @@ import java.io.IOException;
 public class MainWindowFile extends JFrame implements PropertyChangeListener {
 
     private JComboBox<String> myExtensionComboBox;
+    private boolean myEventsSaved = true;
     private JTextField myDirectoryField;
     private JButton myStartButton;
     private JButton myStopButton;
@@ -104,7 +105,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
 
         menuBar.add(new JMenu("Email"));
 
-        JMenu aboutMenu = new JMenu("About");
+        JMenu aboutMenu = new JMenu("Help");
         JMenuItem aboutItem = new JMenuItem("About this app");
         aboutItem.addActionListener(e -> showAboutDialog());
         aboutMenu.add(aboutItem);
@@ -239,6 +240,20 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
             }
         });
 
+        mySaveButton.addActionListener(e -> {
+            if (myFileEvents.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No file events to save.");
+                return;
+            }
+
+            DatabaseManager db = new DatabaseManager("data/file_events.db");
+            db.insertFileEvents(myFileEvents);
+            myEventsSaved = true;
+            db.close();
+
+            JOptionPane.showMessageDialog(this, "File events saved to database.");
+        });
+
 
         myQueryButton.addActionListener(e -> openQueryWindow());
 
@@ -325,6 +340,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if ("fileEvent".equals(evt.getPropertyName())) {
+            myEventsSaved = false;
             FileEvent event = (FileEvent) evt.getNewValue();
             myFileEvents.add(event);
             String myFormattedDate = event.getEventTime().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));;
@@ -341,4 +357,26 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         }
 
     }
+
+    @Override
+    protected void processWindowEvent(WindowEvent e) {
+        if (e.getID() == WindowEvent.WINDOW_CLOSING) {
+            if (!myEventsSaved && !myFileEvents.isEmpty()) {
+                int result = JOptionPane.showConfirmDialog(this,
+                        "You have unsaved file events. Do you want to save them before exiting?",
+                        "Save before exit?", JOptionPane.YES_NO_CANCEL_OPTION);
+
+                if (result == JOptionPane.CANCEL_OPTION) {
+                    return; // Stop closing
+                } else if (result == JOptionPane.YES_OPTION) {
+                    DatabaseManager db = new DatabaseManager("data/file_events.db");
+                    db.insertFileEvents(myFileEvents);
+                    db.close();
+                    myEventsSaved = true;
+                }
+            }
+        }
+        super.processWindowEvent(e);
+    }
+
 }

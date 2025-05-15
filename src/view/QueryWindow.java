@@ -32,8 +32,18 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         myButtonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         myComboBox = new JComboBox<>(new String[]{
-                "Choose query", "Query 1 - All rows", "Query 2 - Top 5", "Query 3 - By Date"
+                "Choose query", "Query 1 - All rows", "Query 2 - Top 5",
         });
+
+        myComboBox.addActionListener(e -> {
+            String selected = (String) myComboBox.getSelectedItem();
+            if ("Query 1 - All rows".equals(selected)) {
+                runAllRowsQuery();
+            } else if ("Query 2 - Top 5".equals(selected)) {
+                runTop5Query();
+            }
+        });
+
         myComboBox.setBackground(Color.WHITE);
 
         myEmailButton = new JButton("Send Email");
@@ -45,6 +55,27 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         Color buttonFgColor = Color.WHITE;
 
         JButton[] buttons = { myEmailButton, myCsvButton, myMainWindowButton, myResetButton };
+
+        //tester code for the Reset functionality in query
+        myResetButton.addActionListener(e -> {
+            int result = JOptionPane.showConfirmDialog(this,
+                    "Are you sure you want to delete all records from the database?",
+                    "Confirm Reset", JOptionPane.YES_NO_OPTION);
+
+            if (result == JOptionPane.YES_OPTION) {
+                model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
+                try (java.sql.Statement stmt = db.getConnection().createStatement()) {
+                    stmt.executeUpdate("DELETE FROM file_events");
+                    JOptionPane.showMessageDialog(this, "Database has been reset.");
+                    myTableModel.setRowCount(0); // Clear the query table
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Error resetting database: " + ex.getMessage());
+                } finally {
+                    db.close();
+                }
+            }
+        });
+
         for (JButton button : buttons) {
             button.setBackground(buttonBgColor);
             button.setForeground(buttonFgColor);
@@ -77,6 +108,50 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         // Add panels to layout
         add(myButtonPanel, BorderLayout.NORTH);
         add(tableScrollPane, BorderLayout.CENTER);
+    }
+
+    private void runAllRowsQuery() {
+        model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
+        try (java.sql.ResultSet rs = db.queryAllRows()) {
+            myTableModel.setRowCount(0); // Clear existing rows
+
+            while (rs != null && rs.next()) {
+                String name = rs.getString("file_name");
+                String path = rs.getString("file_path");
+                String ext = rs.getString("file_extension");
+                String event = rs.getString("event_type");
+                String datetime = rs.getString("datetime");
+
+                myTableModel.addRow(new Object[] { name, path, ext, event, datetime });
+            }
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error running query: " + ex.getMessage());
+        } finally {
+            db.close();
+        }
+    }
+
+    private void runTop5Query() {
+        model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
+        try (java.sql.ResultSet rs = db.queryTop5()) {
+            myTableModel.setRowCount(0);
+
+            while (rs.next()) {
+                String name = rs.getString("file_name");
+                String path = rs.getString("file_path");
+                String ext = rs.getString("file_extension");
+                String event = rs.getString("event_type");
+                String datetime = rs.getString("datetime");
+
+                myTableModel.addRow(new Object[]{name, path, ext, event, datetime});
+            }
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error running top 5 query: " + ex.getMessage());
+        } finally {
+            db.close();
+        }
     }
 
     @Override

@@ -1,5 +1,4 @@
 package controller;
-
 import view.QueryWindow;
 import view.MainWindowFile;
 import javax.swing.*;
