@@ -34,7 +34,6 @@ public class FileSystemMain {
 
                 // Actual MainWindowFile launch only and opens query window from the button
                 MainWindowFile mainWindow = new MainWindowFile();
-                mainWindow.setSize(900, 600);
                 mainWindow.setLocationRelativeTo(null);
                 mainWindow.setVisible(true);
 

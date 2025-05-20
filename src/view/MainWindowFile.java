@@ -51,7 +51,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-        setSize(1000, 600);
+        setSize(1100, 600);
         setLocationRelativeTo(null);
         setJMenuBar(buildMenuBar());
 
@@ -80,13 +80,10 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         startItem.addActionListener(e -> myStartButton.doClick());
         JMenuItem stopItem = new JMenuItem("Stop");
         stopItem.addActionListener(e -> myStopButton.doClick());
-        JMenuItem queryItem = new JMenuItem("Query Database");
-        queryItem.addActionListener(e -> myQueryButton.doClick());
         JMenuItem exitItem = new JMenuItem("Exit");
         exitItem.addActionListener(e -> dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING)));
         fileMenu.add(startItem);
         fileMenu.add(stopItem);
-        fileMenu.add(queryItem);
         fileMenu.addSeparator();
         fileMenu.add(exitItem);
         menuBar.add(fileMenu);
@@ -100,6 +97,9 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
             //JOptionPane.showMessageDialog(this, "Database connected successfully.");
             myStatusLabel.setText("Database is connected.");
         });
+        JMenuItem queryItem = new JMenuItem("Query Database");
+        queryItem.addActionListener(e -> myQueryButton.doClick());
+        databaseMenu.add(queryItem);
         databaseMenu.add(connectItem);
         menuBar.add(databaseMenu);
 
@@ -108,6 +108,8 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         JMenu aboutMenu = new JMenu("Help");
         JMenuItem aboutItem = new JMenuItem("About this app");
         aboutItem.addActionListener(e -> showAboutDialog());
+        JMenuItem shortcutItem = new JMenuItem("Shortcuts");
+        aboutMenu.add(shortcutItem);
         aboutMenu.add(aboutItem);
         menuBar.add(aboutMenu);
 
@@ -159,7 +161,6 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         myDirectoryField = new JTextField(35);
         myBrowseButton = new JButton("Browse");
 
-        //changes to the Browse button cosmetically
         myBrowseButton.setBackground(Color.BLACK);
         myBrowseButton.setForeground(Color.WHITE);
         myBrowseButton.setFocusPainted(false);
@@ -169,8 +170,15 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 myDirectoryField.setText(chooser.getSelectedFile().getAbsolutePath());
+
+                // Message shown after selection
+                JOptionPane.showMessageDialog(this,
+                        "Directory selected. Click Start Monitoring Button to begin tracking changes.",
+                        "Directory Selected",
+                        JOptionPane.INFORMATION_MESSAGE);
             }
         });
+
         dirPanel.add(myDirectoryField);
         dirPanel.add(myBrowseButton);
 
@@ -188,15 +196,6 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
             button.setPreferredSize(new Dimension(160, 35));
             buttonPanel.add(button);
         }
-
-        myBrowseButton = new JButton("Browse");
-        myBrowseButton.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
-            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                myDirectoryField.setText(chooser.getSelectedFile().getAbsolutePath());
-            }
-        });
 
         myStopButton.setEnabled(false);
 
@@ -224,11 +223,18 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                     myFileMonitor.stopMonitoring();
                     myStartButton.setEnabled(true);
                     myStopButton.setEnabled(false);
+
+                    // ✅ Show confirmation message
+                    JOptionPane.showMessageDialog(this,
+                            "Monitoring has been stopped. The program is no longer observing the selected directory.",
+                            "Monitoring Stopped",
+                            JOptionPane.INFORMATION_MESSAGE);
                 }
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(this, "Error stopping monitor: " + ex.getMessage());
             }
         });
+
 
         myResetButton.addActionListener(e -> {
             int result = JOptionPane.showConfirmDialog(this,
@@ -275,9 +281,9 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         myFileTable.setBackground(Color.WHITE);
 
         //Setting preferred column width
-        myFileTable.getColumnModel().getColumn(0).setPreferredWidth(120); // File Name
-        myFileTable.getColumnModel().getColumn(1).setPreferredWidth(350); // Path
-        myFileTable.getColumnModel().getColumn(2).setPreferredWidth(70);  // Extension
+        myFileTable.getColumnModel().getColumn(0).setPreferredWidth(200); // File Name
+        myFileTable.getColumnModel().getColumn(1).setPreferredWidth(400); // Path
+        myFileTable.getColumnModel().getColumn(2).setPreferredWidth(100);  // Extension
         myFileTable.getColumnModel().getColumn(3).setPreferredWidth(90);  // Date
         myFileTable.getColumnModel().getColumn(4).setPreferredWidth(90);  // Time
 
@@ -361,6 +367,18 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
     @Override
     protected void processWindowEvent(WindowEvent e) {
         if (e.getID() == WindowEvent.WINDOW_CLOSING) {
+            // Confirm exit
+            int confirmExit = JOptionPane.showConfirmDialog(this,
+                    "Are you sure you want to exit the application?",
+                    "Confirm Exit",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
+
+            if (confirmExit != JOptionPane.YES_OPTION) {
+                return; // User chose NO — cancel the close
+            }
+
+            // Ask about unsaved events only if exiting is confirmed
             if (!myEventsSaved && !myFileEvents.isEmpty()) {
                 int result = JOptionPane.showConfirmDialog(this,
                         "You have unsaved file events. Do you want to save them before exiting?",
@@ -376,7 +394,9 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                 }
             }
         }
-        super.processWindowEvent(e);
+
+        super.processWindowEvent(e); // Continue closing
     }
+
 
 }
