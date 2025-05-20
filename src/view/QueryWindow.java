@@ -32,7 +32,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         myButtonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         myComboBox = new JComboBox<>(new String[]{
-                "Choose query", "Query 1 - All rows", "Query 2 - Top 5",
+                "Choose query","Query 1 - All rows", "Query 2 - Top 5","Query 3 - Top 10",
         });
 
         myComboBox.addActionListener(e -> {
@@ -49,6 +49,13 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         myEmailButton = new JButton("Send Email");
         myCsvButton = new JButton("Export to CSV");
         myMainWindowButton = new JButton("Return to Main Window");
+        myMainWindowButton.addActionListener(e -> {
+            // Find and close the top-level window (JFrame) that contains this panel
+            Window window = SwingUtilities.getWindowAncestor(this);
+            if (window != null) {
+                window.dispose();  // Close only the Query Window frame
+            }
+        });
         myResetButton = new JButton("Reset Database");
 
         Color buttonBgColor = Color.BLACK;
@@ -89,9 +96,16 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         myButtonPanel.add(myResetButton);
 
         // Center panel with table
-        String[] columnNames = {"File Name", "Path", "Extension", "Event Type", "Date/Time"};
+        String[] columnNames = {"File Name", "Path", "Extension", "Event", "Date", "Time"};
         myTableModel = new DefaultTableModel(columnNames, 0);
         myResultTable = new JTable(myTableModel);
+        myResultTable.getColumnModel().getColumn(0).setPreferredWidth(200); // File Name
+        myResultTable.getColumnModel().getColumn(1).setPreferredWidth(400); // Path
+        myResultTable.getColumnModel().getColumn(2).setPreferredWidth(100); // Extension
+        myResultTable.getColumnModel().getColumn(3).setPreferredWidth(100); // Event Type
+        myResultTable.getColumnModel().getColumn(4).setPreferredWidth(100); // Date
+        myResultTable.getColumnModel().getColumn(5).setPreferredWidth(100); // Time
+
         myResultTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         myResultTable.setBackground(Color.WHITE);
         myResultTable.getTableHeader().setBackground(Color.WHITE);
