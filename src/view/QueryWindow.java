@@ -32,7 +32,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         myButtonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         myComboBox = new JComboBox<>(new String[]{
-                "Choose query", "Query 1 - All rows", "Query 2 - Top 5",
+                "Choose query", "Query 1 - All rows", "Query 2 - Top 5", "Query 3 - Top 10"
         });
 
         myComboBox.addActionListener(e -> {
@@ -41,6 +41,8 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 runAllRowsQuery();
             } else if ("Query 2 - Top 5".equals(selected)) {
                 runTop5Query();
+            } else if ("Query 3 - Top 10".equals(selected)) {
+                runTop10Query();
             }
         });
 
@@ -153,6 +155,29 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
             db.close();
         }
     }
+
+    private void runTop10Query() {
+        model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
+        try (java.sql.ResultSet rs = db.queryTop10()) {
+            myTableModel.setRowCount(0);
+
+            while (rs.next()) {
+                String name = rs.getString("file_name");
+                String path = rs.getString("file_path");
+                String ext = rs.getString("file_extension");
+                String event = rs.getString("event_type");
+                String datetime = rs.getString("datetime");
+
+                myTableModel.addRow(new Object[]{name, path, ext, event, datetime});
+            }
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error running top 10 query: " + ex.getMessage());
+        } finally {
+            db.close();
+        }
+    }
+
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
