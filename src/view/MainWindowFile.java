@@ -1,8 +1,10 @@
 package view;
 
+import model.EmailSender;
 import model.FileEvent;
 import model.DatabaseManager;
 import controller.FileMonitor;
+import model.IEmailSender;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -224,7 +226,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                     myStartButton.setEnabled(true);
                     myStopButton.setEnabled(false);
 
-                    // ✅ Show confirmation message
+                    // Show confirmation message
                     JOptionPane.showMessageDialog(this,
                             "Monitoring has been stopped. The program is no longer observing the selected directory.",
                             "Monitoring Stopped",
@@ -326,9 +328,12 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
      * Opens the database query window in a new frame.
      */
     private void openQueryWindow() {
+        IEmailSender emailSender = new EmailSender("filesystemwatcher360@gmail.com", "dayh umbg abut fyoj");
+        DatabaseManager dbManager = new DatabaseManager("data/file_events.db");
+        QueryWindow queryWindow = new QueryWindow(dbManager, emailSender);
         JFrame queryFrame = new JFrame("Query Window");
         queryFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        queryFrame.setContentPane(new view.QueryWindow());
+        queryFrame.setContentPane(queryWindow);
         queryFrame.setSize(900, 500);
         queryFrame.setLocationRelativeTo(this);
         queryFrame.setVisible(true);

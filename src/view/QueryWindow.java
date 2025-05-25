@@ -1,13 +1,20 @@
 package view;
 
+import model.EmailSender;
+import model.IEmailSender;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 
 public class QueryWindow extends JPanel implements PropertyChangeListener {
+
+    private final model.DatabaseManager databaseManager;
+    private final IEmailSender emailSender;
 
     /** Button to send the email. */
     final private JButton myEmailButton;
@@ -23,7 +30,12 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
     private JTable myResultTable;
     private DefaultTableModel myTableModel;
 
-    public QueryWindow() {
+
+    public QueryWindow(model.DatabaseManager db, IEmailSender sender) {
+
+        this.databaseManager = db;
+        this.emailSender = sender;
+
         BorderLayout theLayout = new BorderLayout();
         setLayout(theLayout);
 
@@ -49,6 +61,9 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         myComboBox.setBackground(Color.WHITE);
 
         myEmailButton = new JButton("Send Email");
+        myEmailButton.setToolTipText("Email exported CSV file");
+        myEmailButton.addActionListener(e -> emailQueryResults());
+
         myCsvButton = new JButton("Export to CSV");
         myMainWindowButton = new JButton("Return to Main Window");
         myMainWindowButton.addActionListener(e -> {
@@ -72,7 +87,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                     "Confirm Reset", JOptionPane.YES_NO_OPTION);
 
             if (result == JOptionPane.YES_OPTION) {
-                model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
+                model.DatabaseManager localdb = new model.DatabaseManager("data/file_events.db");
                 try (java.sql.Statement stmt = db.getConnection().createStatement()) {
                     stmt.executeUpdate("DELETE FROM file_events");
                     JOptionPane.showMessageDialog(this, "Database has been reset.");
@@ -127,8 +142,8 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
     }
 
     private void runAllRowsQuery() {
-        model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
-        try (java.sql.ResultSet rs = db.queryAllRows()) {
+        model.DatabaseManager localDb = new model.DatabaseManager("data/file_events.db");
+        try (java.sql.ResultSet rs = localDb.queryAllRows()) {
             myTableModel.setRowCount(0); // Clear existing rows
 
             while (rs != null && rs.next()) {
@@ -138,13 +153,13 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 String event = rs.getString("event_type");
                 String datetime = rs.getString("datetime");
 
-                myTableModel.addRow(new Object[] { name, path, ext, event, datetime });
+                myTableModel.addRow(new Object[]{name, path, ext, event, datetime});
             }
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error running query: " + ex.getMessage());
         } finally {
-            db.close();
+            localDb.close();
         }
     }
 
@@ -191,6 +206,34 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
             db.close();
         }
     }
+
+    private void emailQueryResults() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select CSV file to email");
+        int result = fileChooser.showOpenDialog(this);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+
+            String recipientEmail = JOptionPane.showInputDialog(this, "Enter recipient's email address:");
+
+            if (recipientEmail != null && !recipientEmail.trim().isEmpty()) {
+                try {
+                    emailSender.sendEmail(
+                            recipientEmail,
+                            "File System Watcher - Query Results",
+                            "Attached is your query result CSV file.",
+                            selectedFile.getAbsolutePath()
+                    );
+                    JOptionPane.showMessageDialog(this, "Email sent successfully!");
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(this, "Failed to send email: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
 
 
     @Override
