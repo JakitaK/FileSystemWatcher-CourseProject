@@ -5,6 +5,7 @@ import javax.mail.*;
 import javax.mail.internet.*;
 import java.io.File;
 
+
 public class EmailSender implements IEmailSender {
 
     private final String senderEmail;

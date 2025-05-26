@@ -207,6 +207,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         }
     }
 
+
     private void emailQueryResults() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Select CSV file to email");

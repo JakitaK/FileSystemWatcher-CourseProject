@@ -1,5 +1,4 @@
 package view;
-
 import model.EmailSender;
 import model.FileEvent;
 import model.DatabaseManager;
