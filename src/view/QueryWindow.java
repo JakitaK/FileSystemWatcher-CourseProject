@@ -79,6 +79,28 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         Color buttonFgColor = Color.WHITE;
 
         JButton[] buttons = { myEmailButton, myCsvButton, myMainWindowButton, myResetButton };
+        myCsvButton.addActionListener(e -> {
+            if (myTableModel.getRowCount() == 0) {
+                JOptionPane.showMessageDialog(this, "No data to export.");
+                return;
+            }
+
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Save CSV File");
+            fileChooser.setSelectedFile(new java.io.File("query_results.csv"));
+
+            int userSelection = fileChooser.showSaveDialog(this);
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                java.io.File fileToSave = fileChooser.getSelectedFile();
+                try {
+                    String queryDescription = (String) myComboBox.getSelectedItem();
+                    CSVExporter.exportTableToCSV(myResultTable, fileToSave.getAbsolutePath(), queryDescription);
+                    JOptionPane.showMessageDialog(this, "CSV exported successfully.");
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Error exporting CSV: " + ex.getMessage());
+                }
+            }
+        });
 
         //tester code for the Reset functionality in query
         myResetButton.addActionListener(e -> {
