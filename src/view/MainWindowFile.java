@@ -211,6 +211,13 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                 myFileMonitor = new FileMonitor(extensions);
                 myFileMonitor.addPropertyChangeListener(this);
                 myFileMonitor.startMonitoring(dir);
+
+                JOptionPane.showMessageDialog(this,
+                        "Files in the directory are now being monitored.",
+                        "Monitoring Started",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+
                 myStartButton.setEnabled(false);
                 myStopButton.setEnabled(true);
             } catch (IOException ex) {
@@ -225,7 +232,6 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                     myStartButton.setEnabled(true);
                     myStopButton.setEnabled(false);
 
-                    // Show confirmation message
                     JOptionPane.showMessageDialog(this,
                             "Monitoring has been stopped. The program is no longer observing the selected directory.",
                             "Monitoring Stopped",
