@@ -211,7 +211,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         myStopButton = new JButton("Stop Monitoring");
         mySaveButton = new JButton("Save to Database");
         myQueryButton = new JButton("Query Database");
-        myResetButton = new JButton("Reset");
+        myResetButton = new JButton("Reset Screen");
 
         // Keyboard shortcuts: Mnemonics
         myStartButton.setMnemonic(KeyEvent.VK_T);
