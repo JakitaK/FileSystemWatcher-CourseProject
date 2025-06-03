@@ -168,14 +168,18 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         try (java.sql.ResultSet rs = localDb.queryAllRows()) {
             myTableModel.setRowCount(0); // Clear existing rows
 
-            while (rs != null && rs.next()) {
+            while (rs.next()) {
                 String name = rs.getString("file_name");
                 String path = rs.getString("file_path");
                 String ext = rs.getString("file_extension");
                 String event = rs.getString("event_type");
                 String datetime = rs.getString("datetime");
 
-                myTableModel.addRow(new Object[]{name, path, ext, event, datetime});
+                String[] dateTimeParts = datetime.split(" ");
+                String date = dateTimeParts[0];
+                String time = dateTimeParts[1];
+
+                myTableModel.addRow(new Object[]{name, path, ext, event, date, time});
             }
 
         } catch (Exception ex) {
@@ -197,7 +201,11 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 String event = rs.getString("event_type");
                 String datetime = rs.getString("datetime");
 
-                myTableModel.addRow(new Object[]{name, path, ext, event, datetime});
+                String[] dateTimeParts = datetime.split(" ");
+                String date = dateTimeParts[0];
+                String time = dateTimeParts[1];
+
+                myTableModel.addRow(new Object[]{name, path, ext, event, date, time});
             }
 
         } catch (Exception ex) {
@@ -219,7 +227,11 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 String event = rs.getString("event_type");
                 String datetime = rs.getString("datetime");
 
-                myTableModel.addRow(new Object[]{name, path, ext, event, datetime});
+                String[] dateTimeParts = datetime.split(" ");
+                String date = dateTimeParts[0];
+                String time = dateTimeParts[1];
+
+                myTableModel.addRow(new Object[]{name, path, ext, event, date, time});
             }
 
         } catch (Exception ex) {

@@ -7,6 +7,9 @@ import model.IEmailSender;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.time.format.DateTimeFormatter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -107,13 +110,33 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         menuBar.add(new JMenu("Email"));
 
         JMenu aboutMenu = new JMenu("Help");
+        JMenuItem shortcutItem = new JMenuItem("Shortcuts");
+        shortcutItem.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this,
+                    "Keyboard Shortcuts:\n" +
+                            "Alt+T or Ctrl+T - Start Monitoring\n" +
+                            "Alt+P or Ctrl+P - Stop Monitoring\n" +
+                            "Alt+S or Ctrl+S - Save to Database\n" +
+                            "Alt+Q or Ctrl+Q - Query Database\n" +
+                            "Alt+R or Ctrl+R - Reset\n",
+                    "Keyboard Shortcuts",
+                    JOptionPane.INFORMATION_MESSAGE);
+        });
+        JMenuItem aboutItem = new JMenuItem("About this app");
+        aboutItem.addActionListener(e -> showAboutDialog());
+        aboutMenu.add(shortcutItem);
+        aboutMenu.add(aboutItem);
+        menuBar.add(aboutMenu);
+
+        /*
+        JMenu aboutMenu = new JMenu("Help");
         JMenuItem aboutItem = new JMenuItem("About this app");
         aboutItem.addActionListener(e -> showAboutDialog());
         JMenuItem shortcutItem = new JMenuItem("Shortcuts");
         aboutMenu.add(shortcutItem);
         aboutMenu.add(aboutItem);
         menuBar.add(aboutMenu);
-
+        */
 
         return menuBar;
     }
@@ -188,7 +211,62 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         myStopButton = new JButton("Stop Monitoring");
         mySaveButton = new JButton("Save to Database");
         myQueryButton = new JButton("Query Database");
-        myResetButton = new JButton("Reset");
+        myResetButton = new JButton("Reset Screen");
+
+        // Keyboard shortcuts: Mnemonics
+        myStartButton.setMnemonic(KeyEvent.VK_T);
+        myStopButton.setMnemonic(KeyEvent.VK_P);
+        mySaveButton.setMnemonic(KeyEvent.VK_S);
+        myQueryButton.setMnemonic(KeyEvent.VK_Q);
+        myResetButton.setMnemonic(KeyEvent.VK_R);
+        // Accelerators
+        myStartButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK), "startMonitoring");
+        myStartButton.getActionMap().put("startMonitoring", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                myStartButton.doClick();
+            }
+        });
+
+        myStopButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK), "stopMonitoring");
+        myStopButton.getActionMap().put("stopMonitoring", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                myStopButton.doClick();
+            }
+        });
+
+        mySaveButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK), "saveDatabase");
+        mySaveButton.getActionMap().put("saveDatabase", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mySaveButton.doClick();
+            }
+        });
+
+        myQueryButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK), "queryDatabase");
+        myQueryButton.getActionMap().put("queryDatabase", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                myQueryButton.doClick();
+            }
+        });
+
+        myResetButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK), "resetScreen");
+        myResetButton.getActionMap().put("resetScreen", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                myResetButton.doClick();
+            }
+        });
+
+
+
 
         JButton[] buttons = { myStartButton, myStopButton, mySaveButton, myQueryButton, myResetButton };
         for (JButton button : buttons) {
@@ -211,6 +289,13 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                 myFileMonitor = new FileMonitor(extensions);
                 myFileMonitor.addPropertyChangeListener(this);
                 myFileMonitor.startMonitoring(dir);
+
+                JOptionPane.showMessageDialog(this,
+                        "Files in the directory are now being monitored.",
+                        "Monitoring Started",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+
                 myStartButton.setEnabled(false);
                 myStopButton.setEnabled(true);
             } catch (IOException ex) {
@@ -225,7 +310,6 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                     myStartButton.setEnabled(true);
                     myStopButton.setEnabled(false);
 
-                    // Show confirmation message
                     JOptionPane.showMessageDialog(this,
                             "Monitoring has been stopped. The program is no longer observing the selected directory.",
                             "Monitoring Stopped",
@@ -317,9 +401,9 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
      */
     private void showAboutDialog() {
         JOptionPane.showMessageDialog(this,
-                "File System Watcher v1.0\n" +
+                "File System Watcher\n" +
                         "Group Members: Jakita Kaur, Ibadat Sandhu, Balkirat Singh\n" +
-                        "This tool monitors and logs file activity.",
+                        "Description: Monitors and logs file activity, with database querying and CSV export.",
                 "About", JOptionPane.INFORMATION_MESSAGE);
     }
 
