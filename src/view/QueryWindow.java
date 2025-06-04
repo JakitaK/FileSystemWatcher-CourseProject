@@ -3,6 +3,7 @@ package view;
 import model.EmailSender;
 import model.IEmailSender;
 
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
