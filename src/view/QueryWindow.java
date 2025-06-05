@@ -1,9 +1,7 @@
 package view;
 
-import model.EmailSender;
+
 import model.IEmailSender;
-
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -11,6 +9,12 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.sql.ResultSet;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.List;
+
 
 public class QueryWindow extends JPanel implements PropertyChangeListener {
 
@@ -45,7 +49,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         myButtonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         myComboBox = new JComboBox<>(new String[]{
-                "Choose query", "Query 1 - All rows", "Query 2 - Top 5", "Query 3 - Top 10"
+                "Choose query", "Query 1 - All rows", "Query 2 - Top 5", "Query 3 - Top 10", "Query 4 - Date", "Query 5 - File Extension", "Query 6 - Event Type"
         });
 
         myComboBox.addActionListener(e -> {
@@ -56,6 +60,38 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 runTop5Query();
             } else if ("Query 3 - Top 10".equals(selected)) {
                 runTop10Query();
+            }else if ("Query 4 - Date".equals(selected)) {
+                String input = JOptionPane.showInputDialog(this, "Enter date (MM-dd-yyyy):");
+                if (input != null && !input.isBlank()) {
+                    try {
+                        DateTimeFormatter inputFormat = DateTimeFormatter.ofPattern("MM-dd-yyyy");
+                        DateTimeFormatter dbFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+                        LocalDate parsed = LocalDate.parse(input.trim(), inputFormat);
+                        String formattedDate = parsed.format(dbFormat); // for the SQL query
+
+                        runDateQuery(formattedDate);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
+                    }
+                }
+            } else if ("Query 5 - File Extension".equals(selected)) {
+                String ext = JOptionPane.showInputDialog(this, "Enter file extension (e.g., .txt):");
+                if (ext != null && !ext.isBlank()) {
+                    runExtensionQuery(ext.trim());
+                }
+            } else if ("Query 6 - Event Type".equals(selected)) {
+                String type = JOptionPane.showInputDialog(this, "Enter event type (e.g., CREATE, MODIFY, DELETE):");
+                if (type != null && !type.isBlank()) {
+                    String input = type.trim().toUpperCase();
+                    if (!input.startsWith("ENTRY_")) {
+                        input = "ENTRY_" + input;
+                    }
+                    runEventTypeQuery(Collections.singletonList(input));
+
+
+
+                }
             }
         });
 
@@ -162,6 +198,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         // Add panels to layout
         add(myButtonPanel, BorderLayout.NORTH);
         add(tableScrollPane, BorderLayout.CENTER);
+
     }
 
     private void runAllRowsQuery() {
@@ -177,10 +214,13 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 String datetime = rs.getString("datetime");
 
                 String[] dateTimeParts = datetime.split(" ");
-                String date = dateTimeParts[0];
+                String dateStr = dateTimeParts[0];  // "yyyy-MM-dd"
                 String time = dateTimeParts[1];
+                LocalDate date = LocalDate.parse(dateStr);
+                String formattedDate = date.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
 
-                myTableModel.addRow(new Object[]{name, path, ext, event, date, time});
+                myTableModel.addRow(new Object[]{name, path, ext, event, formattedDate, time});
+
             }
 
         } catch (Exception ex) {
@@ -203,10 +243,12 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 String datetime = rs.getString("datetime");
 
                 String[] dateTimeParts = datetime.split(" ");
-                String date = dateTimeParts[0];
+                String dateStr = dateTimeParts[0];  // "yyyy-MM-dd"
                 String time = dateTimeParts[1];
+                LocalDate date = LocalDate.parse(dateStr);
+                String formattedDate = date.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
 
-                myTableModel.addRow(new Object[]{name, path, ext, event, date, time});
+                myTableModel.addRow(new Object[]{name, path, ext, event, formattedDate, time});
             }
 
         } catch (Exception ex) {
@@ -229,10 +271,12 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 String datetime = rs.getString("datetime");
 
                 String[] dateTimeParts = datetime.split(" ");
-                String date = dateTimeParts[0];
+                String dateStr = dateTimeParts[0];  // "yyyy-MM-dd"
                 String time = dateTimeParts[1];
+                LocalDate date = LocalDate.parse(dateStr);
+                String formattedDate = date.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
 
-                myTableModel.addRow(new Object[]{name, path, ext, event, date, time});
+                myTableModel.addRow(new Object[]{name, path, ext, event, formattedDate, time});
             }
 
         } catch (Exception ex) {
@@ -241,6 +285,91 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
             db.close();
         }
     }
+
+    private void runDateQuery(String date) {
+        model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
+        try (ResultSet rs = db.queryByDate(date)) {
+            myTableModel.setRowCount(0);
+
+            while (rs.next()) {
+                String name = rs.getString("file_name");
+                String path = rs.getString("file_path");
+                String ext = rs.getString("file_extension");
+                String event = rs.getString("event_type");
+                String datetime = rs.getString("datetime");
+
+                String[] dateTimeParts = datetime.split(" ");
+                String dateStr = dateTimeParts[0];
+                String time = dateTimeParts[1];
+
+                LocalDate formatted = LocalDate.parse(dateStr);
+                String formattedDate = formatted.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
+
+                myTableModel.addRow(new Object[]{name, path, ext, event, formattedDate, time});
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error filtering by date: " + ex.getMessage());
+        } finally {
+            db.close();
+        }
+    }
+
+    private void runExtensionQuery(String extension) {
+        model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
+        try (java.sql.ResultSet rs = db.queryByExtension(extension)) {
+            myTableModel.setRowCount(0);
+
+            while (rs.next()) {
+                String name = rs.getString("file_name");
+                String path = rs.getString("file_path");
+                String ext = rs.getString("file_extension");
+                String event = rs.getString("event_type");
+                String datetime = rs.getString("datetime");
+
+                String[] dateTimeParts = datetime.split(" ");
+                String dateStr = dateTimeParts[0];  // "yyyy-MM-dd"
+                String time = dateTimeParts[1];
+                LocalDate date = LocalDate.parse(dateStr);
+                String formattedDate = date.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
+
+                myTableModel.addRow(new Object[]{name, path, ext, event, formattedDate, time});
+            }
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error filtering by extension: " + ex.getMessage());
+        } finally {
+            db.close();
+        }
+    }
+
+    private void runEventTypeQuery(java.util.List<String> types) {
+        model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
+        try (java.sql.ResultSet rs = db.queryByEventTypes((java.util.List<String>) types)) {
+            myTableModel.setRowCount(0);
+
+            while (rs.next()) {
+                String name = rs.getString("file_name");
+                String path = rs.getString("file_path");
+                String ext = rs.getString("file_extension");
+                String event = rs.getString("event_type");
+                String datetime = rs.getString("datetime");
+
+                String[] dateTimeParts = datetime.split(" ");
+                String dateStr = dateTimeParts[0];  // "yyyy-MM-dd"
+                String time = dateTimeParts[1];
+                LocalDate date = LocalDate.parse(dateStr);
+                String formattedDate = date.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
+
+                myTableModel.addRow(new Object[]{name, path, ext, event, formattedDate, time});
+            }
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error filtering by event type: " + ex.getMessage());
+        } finally {
+            db.close();
+        }
+    }
+
 
 
     private void emailQueryResults() {

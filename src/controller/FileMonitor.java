@@ -1,7 +1,6 @@
 package controller;
 import model.FileEvent;
 
-
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;

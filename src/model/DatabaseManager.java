@@ -1,6 +1,7 @@
 package model;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -132,6 +133,69 @@ public class DatabaseManager {
             return null;
         }
     }
+
+    public ResultSet queryByExtension(String extension) {
+        try {
+            String sql = """
+        SELECT file_name, file_path, file_extension, event_type,
+               date || ' ' || time AS datetime
+        FROM file_events
+        WHERE file_extension = ?
+        ORDER BY datetime DESC
+        """;
+            PreparedStatement pstmt = myConnection.prepareStatement(sql);
+            pstmt.setString(1, extension);
+            return pstmt.executeQuery();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public ResultSet queryByEventTypes(List<String> eventTypes) {
+        try {
+            // Build dynamic placeholders (?, ?, ...)
+            String placeholders = String.join(", ", eventTypes.stream().map(e -> "?").toArray(String[]::new));
+
+            String sql = """
+        SELECT file_name, file_path, file_extension, event_type,
+               date || ' ' || time AS datetime
+        FROM file_events
+        WHERE event_type IN (%s)
+        ORDER BY datetime DESC
+        """.formatted(placeholders);
+
+            PreparedStatement pstmt = myConnection.prepareStatement(sql);
+            for (int i = 0; i < eventTypes.size(); i++) {
+                pstmt.setString(i + 1, eventTypes.get(i));
+            }
+
+            return pstmt.executeQuery();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public ResultSet queryByDate(String date) {
+        try {
+            String sql = """
+            SELECT file_name, file_path, file_extension, event_type,
+                   date || ' ' || time AS datetime
+            FROM file_events
+            WHERE date = ?
+            ORDER BY time DESC
+        """;
+            PreparedStatement pstmt = myConnection.prepareStatement(sql);
+            pstmt.setString(1, date); // "yyyy-MM-dd"
+            return pstmt.executeQuery();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+
 
 
 }
