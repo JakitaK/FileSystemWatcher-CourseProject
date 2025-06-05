@@ -67,7 +67,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         mainPanel.add(tablePanel, BorderLayout.CENTER);
         add(mainPanel, BorderLayout.CENTER);
 
-        myStatusLabel = new JLabel("Database not connected.");
+        myStatusLabel = new JLabel("Database is connected.");
         myStatusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         add(myStatusLabel, BorderLayout.SOUTH);
     }
@@ -95,19 +95,10 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
 
 
         JMenu databaseMenu = new JMenu("Database");
-        JMenuItem connectItem = new JMenuItem("Connect to DataBase");
-        connectItem.addActionListener(e -> {
-            DatabaseManager myDatabaseManager = new DatabaseManager("data/file_events.db");
-            //JOptionPane.showMessageDialog(this, "Database connected successfully.");
-            myStatusLabel.setText("Database is connected.");
-        });
         JMenuItem queryItem = new JMenuItem("Query Database");
         queryItem.addActionListener(e -> myQueryButton.doClick());
         databaseMenu.add(queryItem);
-        databaseMenu.add(connectItem);
         menuBar.add(databaseMenu);
-
-        menuBar.add(new JMenu("Email"));
 
         JMenu aboutMenu = new JMenu("Help");
         JMenuItem shortcutItem = new JMenuItem("Shortcuts");
@@ -127,16 +118,6 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         aboutMenu.add(shortcutItem);
         aboutMenu.add(aboutItem);
         menuBar.add(aboutMenu);
-
-        /*
-        JMenu aboutMenu = new JMenu("Help");
-        JMenuItem aboutItem = new JMenuItem("About this app");
-        aboutItem.addActionListener(e -> showAboutDialog());
-        JMenuItem shortcutItem = new JMenuItem("Shortcuts");
-        aboutMenu.add(shortcutItem);
-        aboutMenu.add(aboutItem);
-        menuBar.add(aboutMenu);
-        */
 
         return menuBar;
     }
