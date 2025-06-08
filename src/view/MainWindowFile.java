@@ -1,3 +1,17 @@
+/**
+ * MainWindowFile.java
+ *
+ * Part of the File Watcher Project.
+ *
+ * This class is the main application window for the File System Watcher.
+ * It provides a GUI that allows users to select directories to monitor for file changes,
+ * start and stop monitoring, save events to the database, query events, and export data.
+ * It also implements keyboard shortcuts, menu items, and integrates with the QueryWindow for queries.
+ *
+ * @author Ibadat Sandhu, Jakita Kaur, Balkirat Singh
+ * @version Spring Quarter
+ */
+
 package view;
 import model.EmailSender;
 import model.FileEvent;
@@ -22,24 +36,52 @@ import java.util.List;
 import java.io.IOException;
 
 /**
- * Main application window for the File System Watcher.
+ * MainWindowFile is the main application window for the File System Watcher project.
+ * It provides a GUI for selecting directories, starting and stopping monitoring,
+ * saving file events to the database, querying the database, and displaying file event logs.
  */
 public class MainWindowFile extends JFrame implements PropertyChangeListener {
 
+    /** Dropdown selector for file extensions to monitor. */
     private JComboBox<String> myExtensionComboBox;
+
+    /** Flag indicating whether events have been saved to the database. */
     private boolean myEventsSaved = true;
+
+    /** Text field to display the directory path being monitored. */
     private JTextField myDirectoryField;
+
+    /** Button to start monitoring. */
     private JButton myStartButton;
+
+    /** Button to stop monitoring. */
     private JButton myStopButton;
+
+    /** Button to save events to the database. */
     private JButton mySaveButton;
+
+    /** Button to open the database query window. */
     private JButton myQueryButton;
+
+    /** Button to reset the screen. */
     private JButton myResetButton;
+
+    /** Button to browse directories. */
     private JButton myBrowseButton;
+
+    /** Table to display file event logs. */
     private JTable myFileTable;
+
+    /** Table model for the file event logs. */
     private DefaultTableModel myTableModel;
+
+    /** Label to display status messages. */
     private JLabel myStatusLabel;
+
+    /** File monitor that watches the directory for changes. */
     FileMonitor myFileMonitor;
 
+    /** List of file events collected during monitoring. */
     private final List<FileEvent> myFileEvents = new ArrayList<>();
 
     /**
@@ -49,7 +91,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         super("File System Watcher");
         try {
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
 
@@ -59,9 +101,9 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         setLocationRelativeTo(null);
         setJMenuBar(buildMenuBar());
 
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        JPanel configPanel = buildConfigPanel();
-        JScrollPane tablePanel = buildTablePanel();
+        final JPanel mainPanel = new JPanel(new BorderLayout());
+        final JPanel configPanel = buildConfigPanel();
+        final JScrollPane tablePanel = buildTablePanel();
 
         mainPanel.add(configPanel, BorderLayout.NORTH);
         mainPanel.add(tablePanel, BorderLayout.CENTER);
@@ -73,18 +115,19 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
     }
 
     /**
-     * Builds the menu bar with File, About, Email, and Help menus.
+     * Builds the menu bar with File, Database, and Help menus.
+     *
      * @return the JMenuBar component
      */
     private JMenuBar buildMenuBar() {
-        JMenuBar menuBar = new JMenuBar();
+        final JMenuBar menuBar = new JMenuBar();
 
-        JMenu fileMenu = new JMenu("File");
-        JMenuItem startItem = new JMenuItem("Start");
+        final JMenu fileMenu = new JMenu("File");
+        final JMenuItem startItem = new JMenuItem("Start");
         startItem.addActionListener(e -> myStartButton.doClick());
-        JMenuItem stopItem = new JMenuItem("Stop");
+        final JMenuItem stopItem = new JMenuItem("Stop");
         stopItem.addActionListener(e -> myStopButton.doClick());
-        JMenuItem exitItem = new JMenuItem("Exit");
+        final JMenuItem exitItem = new JMenuItem("Exit");
         exitItem.addActionListener(e -> dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING)));
         fileMenu.add(startItem);
         fileMenu.add(stopItem);
@@ -94,14 +137,14 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
 
 
 
-        JMenu databaseMenu = new JMenu("Database");
-        JMenuItem queryItem = new JMenuItem("Query Database");
+        final JMenu databaseMenu = new JMenu("Database");
+        final JMenuItem queryItem = new JMenuItem("Query Database");
         queryItem.addActionListener(e -> myQueryButton.doClick());
         databaseMenu.add(queryItem);
         menuBar.add(databaseMenu);
 
-        JMenu aboutMenu = new JMenu("Help");
-        JMenuItem shortcutItem = new JMenuItem("Shortcuts");
+        final JMenu aboutMenu = new JMenu("Help");
+        final JMenuItem shortcutItem = new JMenuItem("Shortcuts");
         shortcutItem.addActionListener(e -> {
             JOptionPane.showMessageDialog(this,
                     "Keyboard Shortcuts:\n" +
@@ -113,7 +156,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                     "Keyboard Shortcuts",
                     JOptionPane.INFORMATION_MESSAGE);
         });
-        JMenuItem aboutItem = new JMenuItem("About this app");
+        final JMenuItem aboutItem = new JMenuItem("About this app");
         aboutItem.addActionListener(e -> showAboutDialog());
         aboutMenu.add(shortcutItem);
         aboutMenu.add(aboutItem);
@@ -123,45 +166,44 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
     }
 
     /**
-     * Builds the top configuration panel with extension selector, directory field, and control buttons.
+     * Builds the top configuration panel with extension selector,
+     * directory field, and control buttons.
+     *
      * @return the configuration panel
      */
     private JPanel buildConfigPanel() {
-        JPanel panel = new JPanel();
+        final JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        JPanel extensionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        final JPanel extensionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         extensionPanel.add(new JLabel("Monitor by extension:"));
         myExtensionComboBox = new JComboBox<>(new String[] {
                 "All extensions", "Custom extension",".txt", ".java", ".pdf", ".doc", ".png", ".log"
         });
 
         myExtensionComboBox.setBackground(Color.WHITE);
-        //(optional if you want to change the color of the text from that grey to a black)
-        // myExtensionComboBox.setForeground(Color.BLACK);
-
 
         myExtensionComboBox.addActionListener(e -> {
-            String selected = (String) myExtensionComboBox.getSelectedItem();
+            final String selected = (String) myExtensionComboBox.getSelectedItem();
             if ("Custom extension".equals(selected)) {
-                String input = JOptionPane.showInputDialog(this,
+                final String input = JOptionPane.showInputDialog(this,
                         "Enter your custom file extension (e.g., .log, .csv):",
                         ".custom");
                 if (input != null && input.startsWith(".")) {
-                    myExtensionComboBox.insertItemAt(input, 2); // inserts under 'Custom extension'
-                    myExtensionComboBox.setSelectedItem(input); // selects the new value
+                    myExtensionComboBox.insertItemAt(input, 2);
+                    myExtensionComboBox.setSelectedItem(input);
                 } else if (input != null) {
                     JOptionPane.showMessageDialog(this,
                             "Invalid extension. It should start with a dot (e.g., .csv).",
                             "Invalid Input", JOptionPane.ERROR_MESSAGE);
-                    myExtensionComboBox.setSelectedIndex(0); // Reset to 'All extensions'
+                    myExtensionComboBox.setSelectedIndex(0);
                 }
             }
         });
 
         extensionPanel.add(myExtensionComboBox);
 
-        JPanel dirPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        final JPanel dirPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         dirPanel.add(new JLabel("Directory to monitor:"));
         myDirectoryField = new JTextField(35);
         myBrowseButton = new JButton("Browse");
@@ -171,12 +213,11 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         myBrowseButton.setFocusPainted(false);
 
         myBrowseButton.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
+            final JFileChooser chooser = new JFileChooser();
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 myDirectoryField.setText(chooser.getSelectedFile().getAbsolutePath());
 
-                // Message shown after selection
                 JOptionPane.showMessageDialog(this,
                         "Directory selected. Click Start Monitoring Button to begin tracking changes.",
                         "Directory Selected",
@@ -187,25 +228,24 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         dirPanel.add(myDirectoryField);
         dirPanel.add(myBrowseButton);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
+        final JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
         myStartButton = new JButton("Start Monitoring");
         myStopButton = new JButton("Stop Monitoring");
         mySaveButton = new JButton("Save to Database");
         myQueryButton = new JButton("Query Database");
         myResetButton = new JButton("Reset Screen");
 
-        // Keyboard shortcuts: Mnemonics
         myStartButton.setMnemonic(KeyEvent.VK_T);
         myStopButton.setMnemonic(KeyEvent.VK_P);
         mySaveButton.setMnemonic(KeyEvent.VK_S);
         myQueryButton.setMnemonic(KeyEvent.VK_Q);
         myResetButton.setMnemonic(KeyEvent.VK_R);
-        // Accelerators
+
         myStartButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
                 .put(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK), "startMonitoring");
         myStartButton.getActionMap().put("startMonitoring", new AbstractAction() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(final ActionEvent e) {
                 myStartButton.doClick();
             }
         });
@@ -214,7 +254,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                 .put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK), "stopMonitoring");
         myStopButton.getActionMap().put("stopMonitoring", new AbstractAction() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(final ActionEvent e) {
                 myStopButton.doClick();
             }
         });
@@ -223,7 +263,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                 .put(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK), "saveDatabase");
         mySaveButton.getActionMap().put("saveDatabase", new AbstractAction() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(final ActionEvent e) {
                 mySaveButton.doClick();
             }
         });
@@ -232,7 +272,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                 .put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK), "queryDatabase");
         myQueryButton.getActionMap().put("queryDatabase", new AbstractAction() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(final ActionEvent e) {
                 myQueryButton.doClick();
             }
         });
@@ -241,7 +281,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                 .put(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK), "resetScreen");
         myResetButton.getActionMap().put("resetScreen", new AbstractAction() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(final ActionEvent e) {
                 myResetButton.doClick();
             }
         });
@@ -249,8 +289,8 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
 
 
 
-        JButton[] buttons = { myStartButton, myStopButton, mySaveButton, myQueryButton, myResetButton };
-        for (JButton button : buttons) {
+        final JButton[] buttons = { myStartButton, myStopButton, mySaveButton, myQueryButton, myResetButton };
+        for (final JButton button : buttons) {
             button.setBackground(Color.BLACK);
             button.setForeground(Color.WHITE);
             button.setPreferredSize(new Dimension(160, 35));
@@ -261,9 +301,9 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
 
         myStartButton.addActionListener(e -> {
             try {
-                String dir = myDirectoryField.getText();
-                List<String> extensions = new ArrayList<>();
-                String selected = (String) myExtensionComboBox.getSelectedItem();
+                final String dir = myDirectoryField.getText();
+                final List<String> extensions = new ArrayList<>();
+                final String selected = (String) myExtensionComboBox.getSelectedItem();
                 if (selected != null && !selected.equals("All extensions")) {
                     extensions.add(selected);
                 }
@@ -279,7 +319,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
 
                 myStartButton.setEnabled(false);
                 myStopButton.setEnabled(true);
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 JOptionPane.showMessageDialog(this, "Error starting monitor: " + ex.getMessage());
             }
         });
@@ -296,7 +336,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                             "Monitoring Stopped",
                             JOptionPane.INFORMATION_MESSAGE);
                 }
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 JOptionPane.showMessageDialog(this, "Error stopping monitor: " + ex.getMessage());
             }
         });
@@ -318,7 +358,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                 return;
             }
 
-            DatabaseManager db = new DatabaseManager("data/file_events.db");
+            final DatabaseManager db = new DatabaseManager("data/file_events.db");
             db.insertFileEvents(myFileEvents);
             myEventsSaved = true;
             db.close();
@@ -337,6 +377,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
 
     /**
      * Builds the scrollable table panel for file watcher events.
+     *
      * @return a JScrollPane wrapping the table
      */
     private JScrollPane buildTablePanel() {
@@ -359,16 +400,16 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
             myFileTable.getColumnModel().getColumn(i).setCellRenderer(leftRenderer);
         }
 
-        JTableHeader header = myFileTable.getTableHeader();
+        final JTableHeader header = myFileTable.getTableHeader();
         header.setBackground(Color.WHITE);
         DefaultTableCellRenderer headerRenderer = (DefaultTableCellRenderer) header.getDefaultRenderer();
         headerRenderer.setHorizontalAlignment(SwingConstants.LEFT);
 
-        JScrollPane scrollPane = new JScrollPane(myFileTable);
+        final JScrollPane scrollPane = new JScrollPane(myFileTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
-        JPanel tableWrapper = new JPanel(new BorderLayout());
-        JLabel titleLabel = new JLabel("File System Watcher Events", SwingConstants.LEFT);
+        final JPanel tableWrapper = new JPanel(new BorderLayout());
+        final JLabel titleLabel = new JLabel("File System Watcher Events", SwingConstants.LEFT);
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 10));
         tableWrapper.add(titleLabel, BorderLayout.NORTH);
@@ -378,7 +419,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
     }
 
     /**
-     * Displays an about dialog with group information.
+     * Displays an about dialog with group member information and description.
      */
     private void showAboutDialog() {
         JOptionPane.showMessageDialog(this,
@@ -392,10 +433,10 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
      * Opens the database query window in a new frame.
      */
     private void openQueryWindow() {
-        IEmailSender emailSender = new EmailSender("filesystemwatcher360@gmail.com", "dayh umbg abut fyoj");
-        DatabaseManager dbManager = new DatabaseManager("data/file_events.db");
-        QueryWindow queryWindow = new QueryWindow(dbManager, emailSender);
-        JFrame queryFrame = new JFrame("Query Window");
+        final IEmailSender emailSender = new EmailSender("filesystemwatcher360@gmail.com", "dayh umbg abut fyoj");
+        final DatabaseManager dbManager = new DatabaseManager("data/file_events.db");
+        final QueryWindow queryWindow = new QueryWindow(dbManager, emailSender);
+        final JFrame queryFrame = new JFrame("Query Window");
         queryFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         queryFrame.setContentPane(queryWindow);
         queryFrame.setSize(900, 500);
@@ -403,7 +444,13 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         queryFrame.setVisible(true);
     }
 
-    private String formatEventType(String rawType) {
+    /**
+     * Converts a raw event type (e.g., ENTRY_CREATE) into a user-friendly string.
+     *
+     * @param rawType the raw event type string
+     * @return the formatted event type string
+     */
+    private String formatEventType(final String rawType) {
         return switch (rawType) {
             case "ENTRY_CREATE" -> "Created";
             case "ENTRY_MODIFY" -> "Modified";
@@ -412,14 +459,20 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         };
     }
 
+    /**
+     * Handles property change events fired by the FileMonitor.
+     * Updates the table and internal data structures with the new file event.
+     *
+     * @param evt the property change event
+     */
     @Override
-    public void propertyChange(PropertyChangeEvent evt) {
+    public void propertyChange(final PropertyChangeEvent evt) {
         if ("fileEvent".equals(evt.getPropertyName())) {
             myEventsSaved = false;
-            FileEvent event = (FileEvent) evt.getNewValue();
+            final FileEvent event = (FileEvent) evt.getNewValue();
             myFileEvents.add(event);
-            String myFormattedDate = event.getEventTime().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));;
-            String myFormattedTime = event.getEventTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));;
+            final String myFormattedDate = event.getEventTime().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));;
+            final String myFormattedTime = event.getEventTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));;
             myTableModel.addRow(new Object[]{
                     event.getFileName(),
                     event.getFilePath(),
@@ -432,29 +485,34 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         }
 
     }
-
+    /**
+     * Handles window events, including prompting the user to save unsaved events
+     * before closing the application.
+     *
+     * @param e the window event
+     */
     @Override
-    protected void processWindowEvent(WindowEvent e) {
+    protected void processWindowEvent(final WindowEvent e) {
         if (e.getID() == WindowEvent.WINDOW_CLOSING) {
-            // Confirm exit
-            int confirmExit = JOptionPane.showConfirmDialog(this,
+
+            final int confirmExit = JOptionPane.showConfirmDialog(this,
                     "Are you sure you want to exit the application?",
                     "Confirm Exit",
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.QUESTION_MESSAGE);
 
             if (confirmExit != JOptionPane.YES_OPTION) {
-                return; // User chose NO — cancel the close
+                return;
             }
 
-            // Ask about unsaved events only if exiting is confirmed
+
             if (!myEventsSaved && !myFileEvents.isEmpty()) {
-                int result = JOptionPane.showConfirmDialog(this,
+                final int result = JOptionPane.showConfirmDialog(this,
                         "You have unsaved file events. Do you want to save them before exiting?",
                         "Save before exit?", JOptionPane.YES_NO_CANCEL_OPTION);
 
                 if (result == JOptionPane.CANCEL_OPTION) {
-                    return; // Stop closing
+                    return;
                 } else if (result == JOptionPane.YES_OPTION) {
                     DatabaseManager db = new DatabaseManager("data/file_events.db");
                     db.insertFileEvents(myFileEvents);
@@ -464,7 +522,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
             }
         }
 
-        super.processWindowEvent(e); // Continue closing
+        super.processWindowEvent(e);
     }
 
 
