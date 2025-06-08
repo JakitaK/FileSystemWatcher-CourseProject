@@ -1,3 +1,16 @@
+/**
+ * QueryWindow.java
+ *
+ * Part of the File Watcher Project.
+ *
+ * This class provides a graphical user interface (GUI) panel that allows users to query
+ * the database for file events based on different criteria such as date, extension, and
+ * event type. It also allows exporting query results to a CSV file and emailing them.
+ *
+ * @author Ibadat Sandhu, Jakita Kaur, Balkirat Singh
+ * @version Spring Quarter
+ */
+
 package view;
 
 
@@ -16,11 +29,20 @@ import java.util.Collections;
 import java.util.List;
 
 
+/**
+ * QueryWindow is a JPanel that enables users to perform queries on the file events
+ * database. It supports queries by date, file extension, and event type. Results are
+ * displayed in a JTable and can be exported as CSV or emailed to a recipient.
+ * It includes GUI components such as buttons for actions, a combo box for query
+ * selection, and table rendering.
+ */
+
 public class QueryWindow extends JPanel implements PropertyChangeListener {
 
+    /** Manager for database operations. */
     private final model.DatabaseManager databaseManager;
+    /** Email sender implementation. */
     private final IEmailSender emailSender;
-
     /** Button to send the email. */
     final private JButton myEmailButton;
     /** Button to export the csv file. */
@@ -33,10 +55,17 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
     final private JComboBox<String> myComboBox;
     /** Table to display results */
     private JTable myResultTable;
+    /** Table model for the query results. */
     private DefaultTableModel myTableModel;
 
 
-    public QueryWindow(model.DatabaseManager db, IEmailSender sender) {
+    /**
+     * Constructs a new QueryWindow with the provided DatabaseManager and EmailSender.
+     *
+     * @param db     the database manager to handle queries
+     * @param sender the email sender implementation
+     */
+    public QueryWindow(final model.DatabaseManager db, final IEmailSender sender) {
 
         this.databaseManager = db;
         this.emailSender = sender;
@@ -44,8 +73,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         BorderLayout theLayout = new BorderLayout();
         setLayout(theLayout);
 
-        // Top button panel setup with padding and horizontal layout
-        JPanel myButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        final JPanel myButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         myButtonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         myComboBox = new JComboBox<>(new String[]{
@@ -53,7 +81,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         });
 
         myComboBox.addActionListener(e -> {
-            String selected = (String) myComboBox.getSelectedItem();
+            final String selected = (String) myComboBox.getSelectedItem();
             if ("Query 1 - All rows".equals(selected)) {
                 runAllRowsQuery();
             } else if ("Query 2 - Top 5".equals(selected)) {
@@ -61,35 +89,33 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
             } else if ("Query 3 - Top 10".equals(selected)) {
                 runTop10Query();
             }else if ("Query 4 - Date".equals(selected)) {
-                String input = JOptionPane.showInputDialog(this, "Enter date (MM-dd-yyyy):");
+                final String input = JOptionPane.showInputDialog(this, "Enter date (MM-dd-yyyy):");
                 if (input != null && !input.isBlank()) {
                     try {
                         DateTimeFormatter inputFormat = DateTimeFormatter.ofPattern("MM-dd-yyyy");
                         DateTimeFormatter dbFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
                         LocalDate parsed = LocalDate.parse(input.trim(), inputFormat);
-                        String formattedDate = parsed.format(dbFormat); // for the SQL query
+                        String formattedDate = parsed.format(dbFormat);
 
                         runDateQuery(formattedDate);
-                    } catch (Exception ex) {
+                    } catch (final Exception ex) {
                         JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM-dd-yyyy.");
                     }
                 }
             } else if ("Query 5 - File Extension".equals(selected)) {
-                String ext = JOptionPane.showInputDialog(this, "Enter file extension (e.g., .txt):");
+                final String ext = JOptionPane.showInputDialog(this, "Enter file extension (e.g., .txt):");
                 if (ext != null && !ext.isBlank()) {
                     runExtensionQuery(ext.trim());
                 }
             } else if ("Query 6 - Event Type".equals(selected)) {
-                String type = JOptionPane.showInputDialog(this, "Enter event type (e.g., CREATE, MODIFY, DELETE):");
+                final String type = JOptionPane.showInputDialog(this, "Enter event type (e.g., CREATE, MODIFY, DELETE):");
                 if (type != null && !type.isBlank()) {
                     String input = type.trim().toUpperCase();
                     if (!input.startsWith("ENTRY_")) {
                         input = "ENTRY_" + input;
                     }
                     runEventTypeQuery(Collections.singletonList(input));
-
-
 
                 }
             }
@@ -104,18 +130,17 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         myCsvButton = new JButton("Export to CSV");
         myMainWindowButton = new JButton("Return to Main Window");
         myMainWindowButton.addActionListener(e -> {
-            // Find and close the top-level window (JFrame) that contains this panel
-            Window window = SwingUtilities.getWindowAncestor(this);
+            final Window window = SwingUtilities.getWindowAncestor(this);
             if (window != null) {
-                window.dispose();  // Close only the Query Window frame
+                window.dispose();
             }
         });
         myResetButton = new JButton("Reset Database");
 
-        Color buttonBgColor = Color.BLACK;
-        Color buttonFgColor = Color.WHITE;
+        final Color buttonBgColor = Color.BLACK;
+        final Color buttonFgColor = Color.WHITE;
 
-        JButton[] buttons = { myEmailButton, myCsvButton, myMainWindowButton, myResetButton };
+        final JButton[] buttons = { myEmailButton, myCsvButton, myMainWindowButton, myResetButton };
         myCsvButton.addActionListener(e -> {
             if (myTableModel.getRowCount() == 0) {
                 JOptionPane.showMessageDialog(this, "No data to export.");
@@ -139,7 +164,6 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
             }
         });
 
-        //tester code for the Reset functionality in query
         myResetButton.addActionListener(e -> {
             int result = JOptionPane.showConfirmDialog(this,
                     "Are you sure you want to delete all records from the database?",
@@ -150,7 +174,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 try (java.sql.Statement stmt = db.getConnection().createStatement()) {
                     stmt.executeUpdate("DELETE FROM file_events");
                     JOptionPane.showMessageDialog(this, "Database has been reset.");
-                    myTableModel.setRowCount(0); // Clear the query table
+                    myTableModel.setRowCount(0);
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Error resetting database: " + ex.getMessage());
                 } finally {
@@ -159,7 +183,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
             }
         });
 
-        for (JButton button : buttons) {
+        for (final JButton button : buttons) {
             button.setBackground(buttonBgColor);
             button.setForeground(buttonFgColor);
         }
@@ -171,23 +195,21 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         myButtonPanel.add(myMainWindowButton);
         myButtonPanel.add(myResetButton);
 
-        // Center panel with table
-        String[] columnNames = {"File Name", "Path", "Extension", "Event", "Date", "Time"};
+        final String[] columnNames = {"File Name", "Path", "Extension", "Event", "Date", "Time"};
         myTableModel = new DefaultTableModel(columnNames, 0);
         myResultTable = new JTable(myTableModel);
-        myResultTable.getColumnModel().getColumn(0).setPreferredWidth(200); // File Name
-        myResultTable.getColumnModel().getColumn(1).setPreferredWidth(400); // Path
-        myResultTable.getColumnModel().getColumn(2).setPreferredWidth(100); // Extension
-        myResultTable.getColumnModel().getColumn(3).setPreferredWidth(100); // Event Type
-        myResultTable.getColumnModel().getColumn(4).setPreferredWidth(100); // Date
-        myResultTable.getColumnModel().getColumn(5).setPreferredWidth(100); // Time
+        myResultTable.getColumnModel().getColumn(0).setPreferredWidth(200);
+        myResultTable.getColumnModel().getColumn(1).setPreferredWidth(400);
+        myResultTable.getColumnModel().getColumn(2).setPreferredWidth(100);
+        myResultTable.getColumnModel().getColumn(3).setPreferredWidth(100);
+        myResultTable.getColumnModel().getColumn(4).setPreferredWidth(100);
+        myResultTable.getColumnModel().getColumn(5).setPreferredWidth(100);
 
         myResultTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         myResultTable.setBackground(Color.WHITE);
         myResultTable.getTableHeader().setBackground(Color.WHITE);
 
-        // Align headers to the left
-        DefaultTableCellRenderer leftRenderer = (DefaultTableCellRenderer)
+        final DefaultTableCellRenderer leftRenderer = (DefaultTableCellRenderer)
                 myResultTable.getTableHeader().getDefaultRenderer();
         leftRenderer.setHorizontalAlignment(SwingConstants.LEFT);
 
@@ -195,16 +217,17 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         tableScrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         tableScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-        // Add panels to layout
         add(myButtonPanel, BorderLayout.NORTH);
         add(tableScrollPane, BorderLayout.CENTER);
 
     }
-
+    /**
+     * Runs a query that retrieves all rows from the database and displays them in the table.
+     */
     private void runAllRowsQuery() {
-        model.DatabaseManager localDb = new model.DatabaseManager("data/file_events.db");
+        final model.DatabaseManager localDb = new model.DatabaseManager("data/file_events.db");
         try (java.sql.ResultSet rs = localDb.queryAllRows()) {
-            myTableModel.setRowCount(0); // Clear existing rows
+            myTableModel.setRowCount(0);
 
             while (rs.next()) {
                 String name = rs.getString("file_name");
@@ -214,7 +237,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 String datetime = rs.getString("datetime");
 
                 String[] dateTimeParts = datetime.split(" ");
-                String dateStr = dateTimeParts[0];  // "yyyy-MM-dd"
+                String dateStr = dateTimeParts[0];
                 String time = dateTimeParts[1];
                 LocalDate date = LocalDate.parse(dateStr);
                 String formattedDate = date.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
@@ -223,15 +246,18 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
 
             }
 
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             JOptionPane.showMessageDialog(this, "Error running query: " + ex.getMessage());
         } finally {
             localDb.close();
         }
     }
 
+    /**
+     * Runs a query that retrieves the top 5 rows from the database and displays them in the table.
+     */
     private void runTop5Query() {
-        model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
+        final model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
         try (java.sql.ResultSet rs = db.queryTop5()) {
             myTableModel.setRowCount(0);
 
@@ -243,7 +269,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 String datetime = rs.getString("datetime");
 
                 String[] dateTimeParts = datetime.split(" ");
-                String dateStr = dateTimeParts[0];  // "yyyy-MM-dd"
+                String dateStr = dateTimeParts[0];
                 String time = dateTimeParts[1];
                 LocalDate date = LocalDate.parse(dateStr);
                 String formattedDate = date.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
@@ -251,15 +277,17 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 myTableModel.addRow(new Object[]{name, path, ext, event, formattedDate, time});
             }
 
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             JOptionPane.showMessageDialog(this, "Error running top 5 query: " + ex.getMessage());
         } finally {
             db.close();
         }
     }
-
+    /**
+     * Runs a query that retrieves the top 10 rows from the database and displays them in the table.
+     */
     private void runTop10Query() {
-        model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
+        final model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
         try (java.sql.ResultSet rs = db.queryTop10()) {
             myTableModel.setRowCount(0);
 
@@ -271,7 +299,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 String datetime = rs.getString("datetime");
 
                 String[] dateTimeParts = datetime.split(" ");
-                String dateStr = dateTimeParts[0];  // "yyyy-MM-dd"
+                String dateStr = dateTimeParts[0];
                 String time = dateTimeParts[1];
                 LocalDate date = LocalDate.parse(dateStr);
                 String formattedDate = date.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
@@ -279,15 +307,19 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 myTableModel.addRow(new Object[]{name, path, ext, event, formattedDate, time});
             }
 
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             JOptionPane.showMessageDialog(this, "Error running top 10 query: " + ex.getMessage());
         } finally {
             db.close();
         }
     }
-
-    private void runDateQuery(String date) {
-        model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
+    /**
+     * Runs a query that filters the file events by the specified date.
+     *
+     * @param date the date to filter by, in yyyy-MM-dd format
+     */
+    private void runDateQuery(final String date) {
+        final model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
         try (ResultSet rs = db.queryByDate(date)) {
             myTableModel.setRowCount(0);
 
@@ -307,15 +339,19 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
 
                 myTableModel.addRow(new Object[]{name, path, ext, event, formattedDate, time});
             }
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             JOptionPane.showMessageDialog(this, "Error filtering by date: " + ex.getMessage());
         } finally {
             db.close();
         }
     }
-
-    private void runExtensionQuery(String extension) {
-        model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
+    /**
+     * Runs a query that filters the file events by the specified file extension.
+     *
+     * @param extension the file extension to filter by
+     */
+    private void runExtensionQuery(final String extension) {
+        final model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
         try (java.sql.ResultSet rs = db.queryByExtension(extension)) {
             myTableModel.setRowCount(0);
 
@@ -327,7 +363,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 String datetime = rs.getString("datetime");
 
                 String[] dateTimeParts = datetime.split(" ");
-                String dateStr = dateTimeParts[0];  // "yyyy-MM-dd"
+                String dateStr = dateTimeParts[0];
                 String time = dateTimeParts[1];
                 LocalDate date = LocalDate.parse(dateStr);
                 String formattedDate = date.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
@@ -335,27 +371,32 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 myTableModel.addRow(new Object[]{name, path, ext, event, formattedDate, time});
             }
 
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             JOptionPane.showMessageDialog(this, "Error filtering by extension: " + ex.getMessage());
         } finally {
             db.close();
         }
     }
 
-    private void runEventTypeQuery(java.util.List<String> types) {
-        model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
+    /**
+     * Runs a query that filters the file events by the specified event type(s).
+     *
+     * @param types a list of event types to filter by
+     */
+    private void runEventTypeQuery(final java.util.List<String> types) {
+        final model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
         try (java.sql.ResultSet rs = db.queryByEventTypes((java.util.List<String>) types)) {
             myTableModel.setRowCount(0);
 
             while (rs.next()) {
-                String name = rs.getString("file_name");
-                String path = rs.getString("file_path");
-                String ext = rs.getString("file_extension");
-                String event = rs.getString("event_type");
-                String datetime = rs.getString("datetime");
+                final String name = rs.getString("file_name");
+                final String path = rs.getString("file_path");
+                final String ext = rs.getString("file_extension");
+                final String event = rs.getString("event_type");
+                final String datetime = rs.getString("datetime");
 
-                String[] dateTimeParts = datetime.split(" ");
-                String dateStr = dateTimeParts[0];  // "yyyy-MM-dd"
+                final String[] dateTimeParts = datetime.split(" ");
+                final String dateStr = dateTimeParts[0];
                 String time = dateTimeParts[1];
                 LocalDate date = LocalDate.parse(dateStr);
                 String formattedDate = date.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
@@ -363,24 +404,25 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                 myTableModel.addRow(new Object[]{name, path, ext, event, formattedDate, time});
             }
 
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             JOptionPane.showMessageDialog(this, "Error filtering by event type: " + ex.getMessage());
         } finally {
             db.close();
         }
     }
 
-
-
+    /**
+     * Exports the displayed query results to a CSV file and sends it by email.
+     */
     private void emailQueryResults() {
-        JFileChooser fileChooser = new JFileChooser();
+        final JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Select CSV file to email");
-        int result = fileChooser.showOpenDialog(this);
+        final int result = fileChooser.showOpenDialog(this);
 
         if (result == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
+            final File selectedFile = fileChooser.getSelectedFile();
 
-            String recipientEmail = JOptionPane.showInputDialog(this, "Enter recipient's email address:");
+            final String recipientEmail = JOptionPane.showInputDialog(this, "Enter recipient's email address:");
 
             if (recipientEmail != null && !recipientEmail.trim().isEmpty()) {
                 try {
@@ -391,7 +433,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                             selectedFile.getAbsolutePath()
                     );
                     JOptionPane.showMessageDialog(this, "Email sent successfully!");
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     JOptionPane.showMessageDialog(this, "Failed to send email: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     e.printStackTrace();
                 }
@@ -399,8 +441,13 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         }
     }
 
+
+    /**
+     * Handles property change events.
+     *
+     * @param evt the property change event
+     */
     @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-        // Placeholder for property change handling
+    public void propertyChange(final PropertyChangeEvent evt) {
     }
 }
