@@ -1,44 +1,32 @@
 package controller;
-import view.QueryWindow;
+
 import view.MainWindowFile;
-import javax.swing.*;
 import java.awt.*;
 
-
+/**
+ * The entry point for the File System Watcher application.
+ * This class initializes and launches the main GUI window MainWindowFile,
+ * The actual query functionality and sub-windows are handled through buttons
+ * or interactions inside MainWindowFile
+ * @author Ibadat Sandhu, Jakita Kaur and Balkirat Singh
+ */
 public class FileSystemMain {
+
+    /**
+     * The main method launches the File System Watcher GUI.
+     * This method schedules the creation of the main application window on the
+     * Event Dispatch Thread using EventQueue.invokeLater(Runnable) to ensure
+     * thread safety in Swing.
+     * @param args command-line arguments (not used)
+     */
     public static void main(String[] args) {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                 /*
-                // Placeholder main window panel (not yet implemented)
-                JPanel mainPanel = new JPanel();
-                mainPanel.add(new JLabel("Main Window - Under Construction"));
+        // Ensuring GUI is created on the Event Dispatch Thread
+        EventQueue.invokeLater(() -> {
 
-                // Create and configure the main application frame
-                JFrame window = new JFrame("File System Watcher");
-                window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                window.setContentPane(mainPanel);
-                window.setSize(900, 600);
-                window.setLocationRelativeTo(null);
-                window.setVisible(true);
-
-                // Launch the QueryWindow directly using JPanel style like CrapsView
-                final QueryWindow queryPanel = new QueryWindow();
-                JFrame queryFrame = new JFrame("Query Window");
-                queryFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                queryFrame.setContentPane(queryPanel);
-                queryFrame.setSize(1000, 550);
-                queryFrame.setLocationRelativeTo(null);
-                queryFrame.setVisible(true);
-                */
-
-                // Actual MainWindowFile launch only and opens query window from the button
-                MainWindowFile mainWindow = new MainWindowFile();
-                mainWindow.setLocationRelativeTo(null);
-                mainWindow.setVisible(true);
-
-            }
+            // Creating and showing the main window of the application
+            MainWindowFile mainWindow = new MainWindowFile();
+            mainWindow.setLocationRelativeTo(null); // Centering the window on the screen
+            mainWindow.setVisible(true);            // Making the window visible
         });
     }
 }
