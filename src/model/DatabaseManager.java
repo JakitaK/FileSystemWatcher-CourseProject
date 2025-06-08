@@ -5,35 +5,59 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * DatabaseManager manages file event database operations such as creating tables,
+ * inserting events, and executing queries.
+ */
 public class DatabaseManager {
 
+    /** Name of the database table. */
     private static final String TABLE_NAME = "file_events";
+
+    /** Path to the SQLite database file. */
     private final String myDbPath;
+
+    /** Connection to the SQLite database. */
     private Connection myConnection;
 
-    public DatabaseManager(String theDbPath) {
+    /**
+     * Constructs a DatabaseManager with the given database path.
+     *
+     * @param theDbPath the path to the SQLite database file
+     */
+    public DatabaseManager(final String theDbPath) {
         this.myDbPath = theDbPath;
         connect();
         createTableIfNeeded();
     }
 
+    /**
+     * Connects to the SQLite database and creates the data folder if needed.
+     */
     private void connect() {
         try {
             new java.io.File("data").mkdirs();
             Class.forName("org.sqlite.JDBC");
             myConnection = DriverManager.getConnection("jdbc:sqlite:" + myDbPath);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (final Exception myException) {
+            myException.printStackTrace();
         }
     }
 
-    // for the reset funcitonaly for the query window
+    /**
+     * Returns the database connection.
+     * Primarily used by the reset functionality in the query window.
+     *
+     * @return the database connection
+     */
     public Connection getConnection() {
         return myConnection;
     }
 
 
-
+    /**
+     * Creates the table if it doesn't exist.
+     */
     private void createTableIfNeeded() {
         final String sql = """
                 CREATE TABLE IF NOT EXISTS %s (
@@ -46,150 +70,192 @@ public class DatabaseManager {
                     time TEXT
                 );
                 """.formatted(TABLE_NAME);
-        try (Statement stmt = myConnection.createStatement()) {
-            stmt.execute(sql);
-        } catch (SQLException e) {
-            e.printStackTrace();
+        try (Statement myStmt = myConnection.createStatement()) {
+            myStmt.execute(sql);
+        } catch (final SQLException myException) {
+            myException.printStackTrace();
         }
     }
 
-    public void insertFileEvents(List<FileEvent> theEvents) {
-        final String sql = """
+    /**
+     * Inserts a list of file events into the database.
+     *
+     * @param theEvents the list of file events to insert
+     */
+    public void insertFileEvents(final List<FileEvent> theEvents) {
+        final String mySql = """
                 INSERT INTO %s (file_name, file_path, file_extension, event_type, date, time)
                 VALUES (?, ?, ?, ?, ?, ?);
                 """.formatted(TABLE_NAME);
 
-        try (PreparedStatement pstmt = myConnection.prepareStatement(sql)) {
-            for (FileEvent event : theEvents) {
-                pstmt.setString(1, event.getFileName());
-                pstmt.setString(2, event.getFilePath());
-                pstmt.setString(3, event.getFileExtension());
-                pstmt.setString(4, event.getEventType());
+        try (PreparedStatement myPstmt = myConnection.prepareStatement(mySql)) {
+            for (FileEvent myEvent : theEvents) {
+                myPstmt.setString(1, myEvent.getFileName());
+                myPstmt.setString(2, myEvent.getFilePath());
+                myPstmt.setString(3, myEvent.getFileExtension());
+                myPstmt.setString(4, myEvent.getEventType());
 
-                DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-                pstmt.setString(5, event.getEventTime().format(dateFormatter));
-                pstmt.setString(6, event.getEventTime().format(timeFormatter));
+                DateTimeFormatter myDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                DateTimeFormatter myTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+                myPstmt.setString(5, myEvent.getEventTime().format(myDateFormatter));
+                myPstmt.setString(6, myEvent.getEventTime().format(myTimeFormatter));
 
-                pstmt.addBatch();
+                myPstmt.addBatch();
             }
-            pstmt.executeBatch();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            myPstmt.executeBatch();
+        } catch (final SQLException myException) {
+            myException.printStackTrace();
         }
     }
 
+
+    /**
+     * Closes the database connection.
+     */
     public void close() {
         try {
             if (myConnection != null && !myConnection.isClosed()) {
                 myConnection.close();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (final SQLException myException) {
+            myException.printStackTrace();
         }
     }
 
+    /**
+     * Queries all rows from the database.
+     *
+     * @return the result set of all rows
+     */
     public ResultSet queryAllRows() {
         try {
-            String sql = "SELECT file_name, file_path, file_extension, event_type, date || ' ' || time AS datetime FROM file_events";
-            Statement stmt = myConnection.createStatement();
-            return stmt.executeQuery(sql);
-        } catch (SQLException e) {
-            e.printStackTrace();
+            final String mySql = "SELECT file_name, file_path, file_extension, event_type, date || ' ' || time AS datetime FROM file_events";
+            Statement myStmt = myConnection.createStatement();
+            return myStmt.executeQuery(mySql);
+        } catch (SQLException myException) {
+            myException.printStackTrace();
             return null;
         }
     }
 
+    /**
+     * Queries the top 5 recent file events.
+     *
+     * @return the result set of the top 5 rows
+     */
     public ResultSet queryTop5() {
         try {
-            String sql = """
+            final String mySql = """
             SELECT file_name, file_path, file_extension, event_type,
                    date || ' ' || time AS datetime
             FROM file_events
             ORDER BY date DESC, time DESC
             LIMIT 5
         """;
-            Statement stmt = myConnection.createStatement();
-            return stmt.executeQuery(sql);
-        } catch (SQLException e) {
-            e.printStackTrace();
+            final Statement myStmt = myConnection.createStatement();
+            return myStmt.executeQuery(mySql);
+        } catch (final SQLException myException) {
+            myException.printStackTrace();
             return null;
         }
     }
 
+    /**
+     * Queries the top 10 recent file events.
+     *
+     * @return the result set of the top 10 rows
+     */
     public ResultSet queryTop10() {
         try {
-            String sql = """
+            final String mySql = """
             SELECT file_name, file_path, file_extension, event_type,
                    date || ' ' || time AS datetime
             FROM file_events
             ORDER BY date DESC, time DESC
             LIMIT 10
         """;
-            Statement stmt = myConnection.createStatement();
-            return stmt.executeQuery(sql);
-        } catch (SQLException e) {
-            e.printStackTrace();
+            final Statement myStmt = myConnection.createStatement();
+            return myStmt.executeQuery(mySql);
+        } catch (final SQLException myException) {
+            myException.printStackTrace();
             return null;
         }
     }
 
-    public ResultSet queryByExtension(String extension) {
+    /**
+     * Queries file events by file extension.
+     *
+     * @param theExtension the file extension to filter by
+     * @return the result set of matching rows
+     */
+    public ResultSet queryByExtension(final String theExtension) {
         try {
-            String sql = """
+            final String mySql = """
         SELECT file_name, file_path, file_extension, event_type,
                date || ' ' || time AS datetime
         FROM file_events
         WHERE file_extension = ?
         ORDER BY datetime DESC
         """;
-            PreparedStatement pstmt = myConnection.prepareStatement(sql);
-            pstmt.setString(1, extension);
-            return pstmt.executeQuery();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            final PreparedStatement myPstmt = myConnection.prepareStatement(mySql);
+            myPstmt.setString(1, theExtension);
+            return myPstmt.executeQuery();
+        } catch (SQLException myException) {
+            myException.printStackTrace();
             return null;
         }
     }
 
-    public ResultSet queryByEventTypes(List<String> eventTypes) {
+    /**
+     * Queries file events by event types.
+     *
+     * @param theEventTypes the list of event types to filter by
+     * @return the result set of matching rows
+     */
+    public ResultSet queryByEventTypes(final List<String> theEventTypes) {
         try {
-            // Build dynamic placeholders (?, ?, ...)
-            String placeholders = String.join(", ", eventTypes.stream().map(e -> "?").toArray(String[]::new));
+            final String myPlaceholders = String.join(", ", theEventTypes.stream().map(e -> "?").toArray(String[]::new));
 
-            String sql = """
+            final String mySql = """
         SELECT file_name, file_path, file_extension, event_type,
                date || ' ' || time AS datetime
         FROM file_events
         WHERE event_type IN (%s)
         ORDER BY datetime DESC
-        """.formatted(placeholders);
+        """.formatted(myPlaceholders);
 
-            PreparedStatement pstmt = myConnection.prepareStatement(sql);
-            for (int i = 0; i < eventTypes.size(); i++) {
-                pstmt.setString(i + 1, eventTypes.get(i));
+            final PreparedStatement myPstmt = myConnection.prepareStatement(mySql);
+            for (int i = 0; i < theEventTypes.size(); i++) {
+                myPstmt.setString(i + 1, theEventTypes.get(i));
             }
 
-            return pstmt.executeQuery();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            return myPstmt.executeQuery();
+        } catch (final SQLException myException) {
+            myException.printStackTrace();
             return null;
         }
     }
-    public ResultSet queryByDate(String date) {
+
+    /**
+     * Queries file events by date.
+     *
+     * @param theDate the date to filter by (yyyy-MM-dd)
+     * @return the result set of matching rows
+     */
+    public ResultSet queryByDate(final String theDate) {
         try {
-            String sql = """
+            final String mySql = """
             SELECT file_name, file_path, file_extension, event_type,
                    date || ' ' || time AS datetime
             FROM file_events
             WHERE date = ?
             ORDER BY time DESC
         """;
-            PreparedStatement pstmt = myConnection.prepareStatement(sql);
-            pstmt.setString(1, date); // "yyyy-MM-dd"
-            return pstmt.executeQuery();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            final PreparedStatement myPstmt = myConnection.prepareStatement(mySql);
+            myPstmt.setString(1, theDate); // "yyyy-MM-dd"
+            return myPstmt.executeQuery();
+        } catch (final SQLException myException) {
+            myException.printStackTrace();
             return null;
         }
     }

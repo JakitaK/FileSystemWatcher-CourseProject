@@ -1,3 +1,15 @@
+/**
+ * CSVExporter.java
+ *
+ * Part of the File Watcher Project.
+ *
+ * This utility class provides a method to export the contents of a JTable
+ * to a CSV file, including a header line that describes the query being exported.
+ *
+ * @author Ibadat Sandhu, Jakita Kaur, Balkirat Singh
+ * @version Spring Quarter
+ */
+
 package view;
 
 import javax.swing.JTable;
@@ -5,6 +17,10 @@ import javax.swing.table.TableModel;
 import java.io.FileWriter;
 import java.io.IOException;
 
+/**
+ * CSVExporter is a utility class that provides functionality to export the data
+ * from a JTable to a CSV file. It includes the query description and table content.
+ */
 public class CSVExporter {
 
     /**
@@ -15,12 +31,10 @@ public class CSVExporter {
      * @param queryInfo  A string describing the query.
      * @throws IOException If writing the file fails.
      */
-    public static void exportTableToCSV(JTable table, String filePath, String queryInfo) throws IOException {
+    public static void exportTableToCSV(final JTable table, final String filePath, final String queryInfo) throws IOException {
         try (FileWriter csvWriter = new FileWriter(filePath)) {
-            // Write query description at the top
             csvWriter.write("Query: " + queryInfo + "\n\n");
 
-            // Write column headers
             TableModel model = table.getModel();
             for (int i = 0; i < model.getColumnCount(); i++) {
                 csvWriter.write(model.getColumnName(i));
@@ -28,7 +42,6 @@ public class CSVExporter {
             }
             csvWriter.write("\n");
 
-            // Write row data
             for (int row = 0; row < model.getRowCount(); row++) {
                 for (int col = 0; col < model.getColumnCount(); col++) {
                     Object value = model.getValueAt(row, col);

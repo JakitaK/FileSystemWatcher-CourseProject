@@ -1,3 +1,16 @@
+/**
+ * EmailSender.java
+ *
+ * Part of the File Watcher Project.
+ *
+ * This class implements the IEmailSender interface, providing the ability to
+ * send an email with an attachment using SMTP (specifically, Gmail SMTP).
+ * It supports authentication, TLS encryption, and attachment handling.
+ *
+ * @author Ibadat Sandhu, Jakita Kaur, Balkirat Singh
+ * @version Spring Quarter
+ */
+
 package model;
 
 import java.util.Properties;
@@ -5,56 +18,77 @@ import javax.mail.*;
 import javax.mail.internet.*;
 import java.io.File;
 
-
+/**
+ * EmailSender is an implementation of the IEmailSender interface that sends
+ * an email using SMTP authentication and TLS.
+ */
 public class EmailSender implements IEmailSender {
 
-    private final String senderEmail;
-    private final String senderPassword;
+    /** The sender's email address. */
+    private final String mySenderEmail;
 
-    public EmailSender(String senderEmail, String senderPassword) {
-        this.senderEmail = senderEmail;
-        this.senderPassword = senderPassword;
+    /** The sender's email password. */
+    private final String mySenderPassword;
+
+    /**
+     * Constructs an EmailSender with the given email credentials.
+     *
+     * @param theSenderEmail    the sender's email address
+     * @param theSenderPassword the sender's email password
+     */
+    public EmailSender(final String theSenderEmail, final String theSenderPassword) {
+        this.mySenderEmail = theSenderEmail;
+        this.mySenderPassword = theSenderPassword;
     }
+    /**
+     * Sends an email with the specified recipient, subject, body, and attachment.
+     *
+     * @param theRecipientEmail the recipient's email address
+     * @param theSubject        the email subject
+     * @param theBody           the email body text
+     * @param theAttachmentPath the file path to the attachment
+     */
 
     @Override
-    public void sendEmail(String recipientEmail, String subject, String body, String attachmentPath) {
-        Properties props = new Properties();
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.host", "smtp.gmail.com");
-        props.put("mail.smtp.port", "587");
+    public void sendEmail(final String theRecipientEmail, final String theSubject, final String theBody, final String theAttachmentPath) {
+        final Properties myProps = new Properties();
+        myProps.put("mail.smtp.auth", "true");
+        myProps.put("mail.smtp.starttls.enable", "true");
+        myProps.put("mail.smtp.host", "smtp.gmail.com");
+        myProps.put("mail.smtp.port", "587");
 
-        Session session = Session.getInstance(props, new Authenticator() {
+        final Session mySession = Session.getInstance(myProps, new Authenticator() {
+           @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(senderEmail, senderPassword);
+                return new PasswordAuthentication(mySenderEmail, mySenderPassword);
             }
         });
 
         try {
-            Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(senderEmail));
-            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail));
-            message.setSubject(subject);
+            final Message myMessage = new MimeMessage(mySession);
+            myMessage.setFrom(new InternetAddress(mySenderEmail));
+            myMessage.setRecipients(Message.RecipientType.TO, InternetAddress.parse(theRecipientEmail));
+            myMessage.setSubject(theSubject);
 
             // Email body
-            MimeBodyPart messageBodyPart = new MimeBodyPart();
-            messageBodyPart.setText(body);
+            final MimeBodyPart myMessageBodyPart = new MimeBodyPart();
+            myMessageBodyPart.setText(theBody);
 
             // Attachment
-            MimeBodyPart attachmentPart = new MimeBodyPart();
-            attachmentPart.attachFile(new File(attachmentPath));
+            final MimeBodyPart myAttachmentPart = new MimeBodyPart();
+            myAttachmentPart.attachFile(new File(theAttachmentPath));
 
-            Multipart multipart = new MimeMultipart();
-            multipart.addBodyPart(messageBodyPart);
-            multipart.addBodyPart(attachmentPart);
+            final Multipart myMultipart = new MimeMultipart();
+            myMultipart.addBodyPart(myMessageBodyPart);
+            myMultipart.addBodyPart(myAttachmentPart);
 
-            message.setContent(multipart);
+            myMessage.setContent(myMultipart);
 
-            Transport.send(message);
+            Transport.send(myMessage);
             System.out.println("Email sent successfully.");
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (final Exception myException) {
+            myException.printStackTrace();
         }
     }
 }
