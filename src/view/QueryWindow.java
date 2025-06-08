@@ -399,8 +399,6 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         }
     }
 
-
-
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         // Placeholder for property change handling
