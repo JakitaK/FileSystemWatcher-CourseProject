@@ -1,8 +1,6 @@
 /**
  * CSVExporter.java
- *
  * Part of the File Watcher Project.
- *
  * This utility class provides a method to export the contents of a JTable
  * to a CSV file, including a header line that describes the query being exported.
  *

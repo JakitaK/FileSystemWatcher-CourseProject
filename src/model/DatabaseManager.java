@@ -1,15 +1,19 @@
 package model;
 
+import java.io.File;
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * DatabaseManager manages file event database operations such as creating tables,
  * inserting events, and executing queries.
  */
 public class DatabaseManager {
+    /** Logger for the class. */
+    private static final Logger LOGGER = Logger.getLogger(DatabaseManager.class.getName());
 
     /** Name of the database table. */
     private static final String TABLE_NAME = "file_events";
@@ -36,11 +40,14 @@ public class DatabaseManager {
      */
     private void connect() {
         try {
-            new java.io.File("data").mkdirs();
+            final File dataDir = new File("data");
+            if (!dataDir.exists() && !dataDir.mkdirs()) {
+                System.err.println("Failed to create 'data' directory.");
+            }
             Class.forName("org.sqlite.JDBC");
             myConnection = DriverManager.getConnection("jdbc:sqlite:" + myDbPath);
         } catch (final Exception myException) {
-            myException.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database connection failed", myException);
         }
     }
 
@@ -73,7 +80,7 @@ public class DatabaseManager {
         try (Statement myStmt = myConnection.createStatement()) {
             myStmt.execute(sql);
         } catch (final SQLException myException) {
-            myException.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to create table", myException);
         }
     }
 
@@ -88,23 +95,23 @@ public class DatabaseManager {
                 VALUES (?, ?, ?, ?, ?, ?);
                 """.formatted(TABLE_NAME);
 
-        try (PreparedStatement myPstmt = myConnection.prepareStatement(mySql)) {
+        try (PreparedStatement myPreparedStatement = myConnection.prepareStatement(mySql)) {
             for (FileEvent myEvent : theEvents) {
-                myPstmt.setString(1, myEvent.getFileName());
-                myPstmt.setString(2, myEvent.getFilePath());
-                myPstmt.setString(3, myEvent.getFileExtension());
-                myPstmt.setString(4, myEvent.getEventType());
+                myPreparedStatement.setString(1, myEvent.getFileName());
+                myPreparedStatement.setString(2, myEvent.getFilePath());
+                myPreparedStatement.setString(3, myEvent.getFileExtension());
+                myPreparedStatement.setString(4, myEvent.getEventType());
 
                 DateTimeFormatter myDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 DateTimeFormatter myTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-                myPstmt.setString(5, myEvent.getEventTime().format(myDateFormatter));
-                myPstmt.setString(6, myEvent.getEventTime().format(myTimeFormatter));
+                myPreparedStatement.setString(5, myEvent.getEventTime().format(myDateFormatter));
+                myPreparedStatement.setString(6, myEvent.getEventTime().format(myTimeFormatter));
 
-                myPstmt.addBatch();
+                myPreparedStatement.addBatch();
             }
-            myPstmt.executeBatch();
+            myPreparedStatement.executeBatch();
         } catch (final SQLException myException) {
-            myException.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to insert file events", myException);
         }
     }
 
@@ -118,7 +125,7 @@ public class DatabaseManager {
                 myConnection.close();
             }
         } catch (final SQLException myException) {
-            myException.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to close connection", myException);
         }
     }
 
@@ -133,7 +140,7 @@ public class DatabaseManager {
             Statement myStmt = myConnection.createStatement();
             return myStmt.executeQuery(mySql);
         } catch (SQLException myException) {
-            myException.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Query all rows failed", myException);
             return null;
         }
     }
@@ -155,7 +162,7 @@ public class DatabaseManager {
             final Statement myStmt = myConnection.createStatement();
             return myStmt.executeQuery(mySql);
         } catch (final SQLException myException) {
-            myException.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Query top 5 failed", myException);
             return null;
         }
     }
@@ -177,7 +184,7 @@ public class DatabaseManager {
             final Statement myStmt = myConnection.createStatement();
             return myStmt.executeQuery(mySql);
         } catch (final SQLException myException) {
-            myException.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Query top 10 failed", myException);
             return null;
         }
     }
@@ -197,11 +204,11 @@ public class DatabaseManager {
         WHERE file_extension = ?
         ORDER BY datetime DESC
         """;
-            final PreparedStatement myPstmt = myConnection.prepareStatement(mySql);
-            myPstmt.setString(1, theExtension);
-            return myPstmt.executeQuery();
+            final PreparedStatement myPreparedStatement = myConnection.prepareStatement(mySql);
+            myPreparedStatement.setString(1, theExtension);
+            return myPreparedStatement.executeQuery();
         } catch (SQLException myException) {
-            myException.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Query by extension failed", myException);
             return null;
         }
     }
@@ -224,14 +231,14 @@ public class DatabaseManager {
         ORDER BY datetime DESC
         """.formatted(myPlaceholders);
 
-            final PreparedStatement myPstmt = myConnection.prepareStatement(mySql);
+            final PreparedStatement myPreparedStatement = myConnection.prepareStatement(mySql);
             for (int i = 0; i < theEventTypes.size(); i++) {
-                myPstmt.setString(i + 1, theEventTypes.get(i));
+                myPreparedStatement.setString(i + 1, theEventTypes.get(i));
             }
 
-            return myPstmt.executeQuery();
+            return myPreparedStatement.executeQuery();
         } catch (final SQLException myException) {
-            myException.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Query by event types failed", myException);
             return null;
         }
     }
@@ -251,11 +258,11 @@ public class DatabaseManager {
             WHERE date = ?
             ORDER BY time DESC
         """;
-            final PreparedStatement myPstmt = myConnection.prepareStatement(mySql);
-            myPstmt.setString(1, theDate); // "yyyy-MM-dd"
-            return myPstmt.executeQuery();
+            final PreparedStatement myPreparedStatement = myConnection.prepareStatement(mySql);
+            myPreparedStatement.setString(1, theDate); // "yyyy-MM-dd"
+            return myPreparedStatement.executeQuery();
         } catch (final SQLException myException) {
-            myException.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Query by date failed", myException);
             return null;
         }
     }
