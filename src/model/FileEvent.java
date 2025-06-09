@@ -1,8 +1,6 @@
 /**
  * FileEvent.java
- *
  * Part of the File Watcher Project.
- *
  * This class represents a single file event detected by the File System Watcher,
  * including details such as the file name, path, extension, event type, and timestamp.
  * It provides getters for each field and a custom toString() implementation for display.

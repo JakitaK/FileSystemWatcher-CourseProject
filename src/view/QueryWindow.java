@@ -1,8 +1,6 @@
 /**
  * QueryWindow.java
- *
  * Part of the File Watcher Project.
- *
  * This class provides a graphical user interface (GUI) panel that allows users to query
  * the database for file events based on different criteria such as date, extension, and
  * event type. It also allows exporting query results to a CSV file and emailing them.
@@ -13,7 +11,7 @@
 
 package view;
 
-
+import model.DatabaseManager;
 import model.IEmailSender;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -26,7 +24,6 @@ import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
-import java.util.List;
 
 
 /**
@@ -40,24 +37,24 @@ import java.util.List;
 public class QueryWindow extends JPanel implements PropertyChangeListener {
 
     /** Manager for database operations. */
-    private final model.DatabaseManager databaseManager;
+    private final DatabaseManager myDatabaseManager;
     /** Email sender implementation. */
-    private final IEmailSender emailSender;
+    private final IEmailSender myEmailSender;
     /** Button to send the email. */
-    final private JButton myEmailButton;
+    private final JButton myEmailButton;
     /** Button to export the csv file. */
-    final private JButton myCsvButton;
+    private final JButton myCsvButton;
     /** Button to return to main window. */
-    final private JButton myMainWindowButton;
+    private final JButton myMainWindowButton;
     /** Button to reset the database.*/
-    final private JButton myResetButton;
+    private final JButton myResetButton;
     /** Dropdown to select query type */
-    final private JComboBox<String> myComboBox;
+    private final JComboBox<String> myComboBox;
     /** Table to display results */
     private JTable myResultTable;
     /** Table model for the query results. */
     private DefaultTableModel myTableModel;
-
+    private static final String DATABASE_PATH = "data/file_events.db";
 
     /**
      * Constructs a new QueryWindow with the provided DatabaseManager and EmailSender.
@@ -65,10 +62,10 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
      * @param db     the database manager to handle queries
      * @param sender the email sender implementation
      */
-    public QueryWindow(final model.DatabaseManager db, final IEmailSender sender) {
+    public QueryWindow(final DatabaseManager db, final IEmailSender sender) {
 
-        this.databaseManager = db;
-        this.emailSender = sender;
+        this.myDatabaseManager = db;
+        this.myEmailSender = sender;
 
         BorderLayout theLayout = new BorderLayout();
         setLayout(theLayout);
@@ -170,7 +167,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
                     "Confirm Reset", JOptionPane.YES_NO_OPTION);
 
             if (result == JOptionPane.YES_OPTION) {
-                model.DatabaseManager localdb = new model.DatabaseManager("data/file_events.db");
+                DatabaseManager localdb = new DatabaseManager(DATABASE_PATH);
                 try (java.sql.Statement stmt = db.getConnection().createStatement()) {
                     stmt.executeUpdate("DELETE FROM file_events");
                     JOptionPane.showMessageDialog(this, "Database has been reset.");
@@ -225,7 +222,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
      * Runs a query that retrieves all rows from the database and displays them in the table.
      */
     private void runAllRowsQuery() {
-        final model.DatabaseManager localDb = new model.DatabaseManager("data/file_events.db");
+        final DatabaseManager localDb = new DatabaseManager(DATABASE_PATH);
         try (java.sql.ResultSet rs = localDb.queryAllRows()) {
             myTableModel.setRowCount(0);
 
@@ -257,8 +254,8 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
      * Runs a query that retrieves the top 5 rows from the database and displays them in the table.
      */
     private void runTop5Query() {
-        final model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
-        try (java.sql.ResultSet rs = db.queryTop5()) {
+        final DatabaseManager localDb = new DatabaseManager(DATABASE_PATH);
+        try (java.sql.ResultSet rs = localDb.queryTop5()) {
             myTableModel.setRowCount(0);
 
             while (rs.next()) {
@@ -280,15 +277,15 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         } catch (final Exception ex) {
             JOptionPane.showMessageDialog(this, "Error running top 5 query: " + ex.getMessage());
         } finally {
-            db.close();
+            localDb.close();
         }
     }
     /**
      * Runs a query that retrieves the top 10 rows from the database and displays them in the table.
      */
     private void runTop10Query() {
-        final model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
-        try (java.sql.ResultSet rs = db.queryTop10()) {
+        final DatabaseManager localDb = new DatabaseManager(DATABASE_PATH);
+        try (java.sql.ResultSet rs = localDb.queryTop10()) {
             myTableModel.setRowCount(0);
 
             while (rs.next()) {
@@ -310,7 +307,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         } catch (final Exception ex) {
             JOptionPane.showMessageDialog(this, "Error running top 10 query: " + ex.getMessage());
         } finally {
-            db.close();
+            localDb.close();
         }
     }
     /**
@@ -319,8 +316,8 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
      * @param date the date to filter by, in yyyy-MM-dd format
      */
     private void runDateQuery(final String date) {
-        final model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
-        try (ResultSet rs = db.queryByDate(date)) {
+        final DatabaseManager localDb = new DatabaseManager(DATABASE_PATH);
+        try (ResultSet rs = localDb.queryByDate(date)) {
             myTableModel.setRowCount(0);
 
             while (rs.next()) {
@@ -342,7 +339,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         } catch (final Exception ex) {
             JOptionPane.showMessageDialog(this, "Error filtering by date: " + ex.getMessage());
         } finally {
-            db.close();
+            localDb.close();
         }
     }
     /**
@@ -351,8 +348,8 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
      * @param extension the file extension to filter by
      */
     private void runExtensionQuery(final String extension) {
-        final model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
-        try (java.sql.ResultSet rs = db.queryByExtension(extension)) {
+        final DatabaseManager localDb = new DatabaseManager(DATABASE_PATH);
+        try (java.sql.ResultSet rs = localDb.queryByExtension(extension)) {
             myTableModel.setRowCount(0);
 
             while (rs.next()) {
@@ -374,7 +371,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         } catch (final Exception ex) {
             JOptionPane.showMessageDialog(this, "Error filtering by extension: " + ex.getMessage());
         } finally {
-            db.close();
+            localDb.close();
         }
     }
 
@@ -384,8 +381,8 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
      * @param types a list of event types to filter by
      */
     private void runEventTypeQuery(final java.util.List<String> types) {
-        final model.DatabaseManager db = new model.DatabaseManager("data/file_events.db");
-        try (java.sql.ResultSet rs = db.queryByEventTypes((java.util.List<String>) types)) {
+        final DatabaseManager localDb = new DatabaseManager(DATABASE_PATH);
+        try (java.sql.ResultSet rs = localDb.queryByEventTypes((java.util.List<String>) types)) {
             myTableModel.setRowCount(0);
 
             while (rs.next()) {
@@ -407,7 +404,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
         } catch (final Exception ex) {
             JOptionPane.showMessageDialog(this, "Error filtering by event type: " + ex.getMessage());
         } finally {
-            db.close();
+            localDb.close();
         }
     }
 
@@ -426,7 +423,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
 
             if (recipientEmail != null && !recipientEmail.trim().isEmpty()) {
                 try {
-                    emailSender.sendEmail(
+                    myEmailSender.sendEmail(
                             recipientEmail,
                             "File System Watcher - Query Results",
                             "Attached is your query result CSV file.",
@@ -440,7 +437,6 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
             }
         }
     }
-
 
     /**
      * Handles property change events.

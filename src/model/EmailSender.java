@@ -1,8 +1,6 @@
 /**
  * EmailSender.java
- *
  * Part of the File Watcher Project.
- *
  * This class implements the IEmailSender interface, providing the ability to
  * send an email with an attachment using SMTP (specifically, Gmail SMTP).
  * It supports authentication, TLS encryption, and attachment handling.
@@ -30,6 +28,18 @@ public class EmailSender implements IEmailSender {
     /** The sender's email password. */
     private final String mySenderPassword;
 
+    /** Property key for SMTP authentication. */
+    private static final String SMTP_AUTH = "mail.smtp.auth";
+
+    /** Property key for enabling STARTTLS encryption. */
+    private static final String SMTP_STARTTLS = "mail.smtp.starttls.enable";
+
+    /** Property key for specifying the SMTP host. */
+    private static final String SMTP_HOST = "mail.smtp.host";
+
+    /** Property key for specifying the SMTP port. */
+    private static final String SMTP_PORT = "mail.smtp.port";
+
     /**
      * Constructs an EmailSender with the given email credentials.
      *
@@ -52,10 +62,10 @@ public class EmailSender implements IEmailSender {
     @Override
     public void sendEmail(final String theRecipientEmail, final String theSubject, final String theBody, final String theAttachmentPath) {
         final Properties myProps = new Properties();
-        myProps.put("mail.smtp.auth", "true");
-        myProps.put("mail.smtp.starttls.enable", "true");
-        myProps.put("mail.smtp.host", "smtp.gmail.com");
-        myProps.put("mail.smtp.port", "587");
+        myProps.put(SMTP_AUTH, "true");
+        myProps.put(SMTP_STARTTLS, "true");
+        myProps.put(SMTP_HOST, "smtp.gmail.com");
+        myProps.put(SMTP_PORT, "587");
 
         final Session mySession = Session.getInstance(myProps, new Authenticator() {
            @Override
@@ -88,7 +98,7 @@ public class EmailSender implements IEmailSender {
             System.out.println("Email sent successfully.");
 
         } catch (final Exception myException) {
-            myException.printStackTrace();
+            System.err.println("Failed to send email: " + myException.getMessage());
         }
     }
 }

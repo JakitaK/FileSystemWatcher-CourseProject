@@ -1,8 +1,6 @@
 /**
  * IEmailSender.java
- *
  * Part of the File Watcher Project.
- *
  * This interface defines the contract for sending emails, including the
  * recipient's email address, email subject, email body, and the file attachment path.
  * Implementations of this interface handle the actual sending logic.

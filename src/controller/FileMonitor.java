@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
  * listeners with FileEvent objects whenever a relevant event is detected.
  *
  * @author Ibadat Sandhu, Jakita Kaur and Balkirat Singh
- * @version
+ * @version Spring Quarter
  */
 public class FileMonitor {
 
@@ -25,24 +25,26 @@ public class FileMonitor {
     private ExecutorService myExecutor;
     private final List<String> myExtensions;
     private final PropertyChangeSupport myChangeSupport;
+    private static final String FILE_EVENT = "fileEvent";
+
 
     /**
      * Constructs a FileMonitor instance with a list of file extensions to watch.
-     * @param extensions a list of file extensions (e.g., ".txt", ".java") to filter; an empty list watches all files
+     * @param theExtensions a list of file extensions (e.g., ".txt", ".java") to filter; an empty list watches all files
      */
-    public FileMonitor(List<String> extensions) {
-        this.myExtensions = extensions;
+    public FileMonitor(List<String> theExtensions) {
+        this.myExtensions = theExtensions;
         this.myChangeSupport = new PropertyChangeSupport(this);
     }
 
     /**
      * This method starts monitoring the specified directory path for file events.
-     * @param path the directory to monitor
+     * @param thePath the directory to monitor
      * @throws IOException if the watch service cannot be initialized or the path is invalid
      */
-    public void startMonitoring(String path) throws IOException {
+    public void startMonitoring(String thePath) throws IOException {
         myWatcher = FileSystems.getDefault().newWatchService();
-        Path dir = Paths.get(path);
+        Path dir = Paths.get(thePath);
 
         // Registering the directory with the WatchService to monitor for create, modify, and delete events
         dir.register(myWatcher,
@@ -84,7 +86,7 @@ public class FileMonitor {
                                 LocalDateTime.now()
                         );
 
-                        myChangeSupport.firePropertyChange("fileEvent", null, fileEvent);
+                        myChangeSupport.firePropertyChange(FILE_EVENT, null, fileEvent);
                     }
                 }
                 key.reset(); // Resetting key to continue watching
@@ -108,25 +110,25 @@ public class FileMonitor {
 
     /**
      * This method checks whether the given file name matches any of the specified extensions.
-     * @param fileName the name of the file to check
+     * @param theFileName the name of the file to check
      * @return true if the file ends with one of the specified extensions, otherwise false
      */
-    private boolean matchesExtension(String fileName) {
+    private boolean matchesExtension(final String theFileName) {
         for (String ext : myExtensions) {
-            if (fileName.endsWith(ext)) return true;
+            if (theFileName.endsWith(ext)) return true;
         }
         return false;
     }
 
     /**
      * Extracts the extension from a file name.
-     * @param fileName the name of the file
+     * @param theFileName the name of the file
      * @return the file extension including the dot (e.g., ".txt"), or an empty string if no extension exists
      */
-    private String getExtension(String fileName) {
-        int lastDot = fileName.lastIndexOf(".");
-        if (lastDot >= 0 && lastDot < fileName.length() - 1) {
-            return fileName.substring(lastDot);
+    private String getExtension(final String theFileName) {
+        int lastDot = theFileName.lastIndexOf(".");
+        if (lastDot >= 0 && lastDot < theFileName.length() - 1) {
+            return theFileName.substring(lastDot);
         }
         return "";
     }
@@ -135,7 +137,7 @@ public class FileMonitor {
      * Registers a PropertyChangeListener to be notified when file events occur.
      * @param listener the listener to register
      */
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
+    public void addPropertyChangeListener(final PropertyChangeListener listener) {
         myChangeSupport.addPropertyChangeListener(listener);
     }
 }

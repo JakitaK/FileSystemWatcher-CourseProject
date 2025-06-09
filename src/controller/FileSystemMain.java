@@ -7,8 +7,9 @@ import java.awt.*;
  * The entry point for the File System Watcher application.
  * This class initializes and launches the main GUI window MainWindowFile,
  * The actual query functionality and sub-windows are handled through buttons
- * or interactions inside MainWindowFile
+ * or interactions inside MainWindowFile.
  * @author Ibadat Sandhu, Jakita Kaur and Balkirat Singh
+ * @version Spring Quarter
  */
 public class FileSystemMain {
 
