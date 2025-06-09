@@ -15,6 +15,9 @@ import java.util.Properties;
 import javax.mail.*;
 import javax.mail.internet.*;
 import java.io.File;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 
 /**
  * EmailSender is an implementation of the IEmailSender interface that sends
@@ -39,6 +42,8 @@ public class EmailSender implements IEmailSender {
 
     /** SMTP property key for specifying the mail server port. */
     private static final String SMTP_PORT = "mail.smtp.port";
+    private static final Logger LOGGER = Logger.getLogger(EmailSender.class.getName());
+
 
     /**
      * Constructs an EmailSender with the sender's email and password.
@@ -94,13 +99,16 @@ public class EmailSender implements IEmailSender {
      * @param theSubject         subject line of the email
      * @param theBody            message body
      * @param theAttachmentPath  optional path to attachment file (null if none)
-     * @throws Exception      if message creation or sending fails
      */
     @Override
-    public void sendEmail(final String theTo, final String theSubject, final String theBody,final String theAttachmentPath) throws Exception {
-        Session session = createSession(); // Create authenticated mail session
-        MimeMessage message = buildMessage(session, theTo, theSubject, theBody, theAttachmentPath); // Build email
-        Transport.send(message); // Send it
+    public void sendEmail(final String theTo, final String theSubject, final String theBody, final String theAttachmentPath) {
+        try {
+            Session session = createSession(); // Create authenticated mail session
+            MimeMessage message = buildMessage(session, theTo, theSubject, theBody, theAttachmentPath); // Build email
+            Transport.send(message);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to send email", e);
+        }
     }
 
     /**
