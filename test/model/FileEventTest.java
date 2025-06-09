@@ -1,4 +1,4 @@
-package test.model;
+package model;
 
 import model.FileEvent;
 import org.junit.jupiter.api.Test;
