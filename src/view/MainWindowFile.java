@@ -1,8 +1,8 @@
 /**
  * MainWindowFile.java
- *
+ * <p>
  * Part of the File Watcher Project.
- *
+ * </p>
  * This class is the main application window for the File System Watcher.
  * It provides a GUI that allows users to select directories to monitor for file changes,
  * start and stop monitoring, save events to the database, query events, and export data.
@@ -66,9 +66,6 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
     /** Button to reset the screen. */
     private JButton myResetButton;
 
-    /** Button to browse directories. */
-    private JButton myBrowseButton;
-
     /** Table to display file event logs. */
     private JTable myFileTable;
 
@@ -76,7 +73,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
     private DefaultTableModel myTableModel;
 
     /** Label to display status messages. */
-    private JLabel myStatusLabel;
+    private final JLabel myStatusLabel;
 
     /** File monitor that watches the directory for changes. */
     FileMonitor myFileMonitor;
@@ -92,7 +89,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         try {
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
         } catch (final Exception e) {
-            e.printStackTrace();
+            System.err.println("Error setting Look and Feel: " + e.getMessage());
         }
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -115,55 +112,91 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
     }
 
     /**
-     * Builds the menu bar with File, Database, and Help menus.
+     * Builds the menu bar for the main window.
      *
-     * @return the JMenuBar component
+     * @return the JMenuBar
      */
     private JMenuBar buildMenuBar() {
         final JMenuBar menuBar = new JMenuBar();
 
+        // Add all menus
+        menuBar.add(createFileMenu());
+        menuBar.add(createDatabaseMenu());
+        menuBar.add(createAboutMenu());
+
+        return menuBar;
+    }
+
+    /**
+     * Creates the File menu with its menu items.
+     *
+     * @return the File JMenu
+     */
+    private JMenu createFileMenu() {
         final JMenu fileMenu = new JMenu("File");
+
         final JMenuItem startItem = new JMenuItem("Start");
         startItem.addActionListener(e -> myStartButton.doClick());
+
         final JMenuItem stopItem = new JMenuItem("Stop");
         stopItem.addActionListener(e -> myStopButton.doClick());
+
         final JMenuItem exitItem = new JMenuItem("Exit");
         exitItem.addActionListener(e -> dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING)));
+
         fileMenu.add(startItem);
         fileMenu.add(stopItem);
         fileMenu.addSeparator();
         fileMenu.add(exitItem);
-        menuBar.add(fileMenu);
 
+        return fileMenu;
+    }
 
-
+    /**
+     * Creates the Database menu with its menu items.
+     *
+     * @return the Database JMenu
+     */
+    private JMenu createDatabaseMenu() {
         final JMenu databaseMenu = new JMenu("Database");
+
         final JMenuItem queryItem = new JMenuItem("Query Database");
         queryItem.addActionListener(e -> myQueryButton.doClick());
         databaseMenu.add(queryItem);
-        menuBar.add(databaseMenu);
 
+        return databaseMenu;
+    }
+
+    /**
+     * Creates the Help menu with its menu items.
+     *
+     * @return the Help JMenu
+     */
+    private JMenu createAboutMenu() {
         final JMenu aboutMenu = new JMenu("Help");
+
         final JMenuItem shortcutItem = new JMenuItem("Shortcuts");
-        shortcutItem.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this,
-                    "Keyboard Shortcuts:\n" +
-                            "Alt+T or Ctrl+T - Start Monitoring\n" +
-                            "Alt+P or Ctrl+P - Stop Monitoring\n" +
-                            "Alt+S or Ctrl+S - Save to Database\n" +
-                            "Alt+Q or Ctrl+Q - Query Database\n" +
-                            "Alt+R or Ctrl+R - Reset\n",
-                    "Keyboard Shortcuts",
-                    JOptionPane.INFORMATION_MESSAGE);
-        });
+        shortcutItem.addActionListener(e -> JOptionPane.showMessageDialog(this,
+                """
+                Keyboard Shortcuts:
+                Alt+T or Ctrl+T - Start Monitoring
+                Alt+P or Ctrl+P - Stop Monitoring
+                Alt+S or Ctrl+S - Save to Database
+                Alt+Q or Ctrl+Q - Query Database
+                Alt+R or Ctrl+R - Reset
+                """,
+                "Keyboard Shortcuts",
+                JOptionPane.INFORMATION_MESSAGE));
+
         final JMenuItem aboutItem = new JMenuItem("About this app");
         aboutItem.addActionListener(e -> showAboutDialog());
+
         aboutMenu.add(shortcutItem);
         aboutMenu.add(aboutItem);
-        menuBar.add(aboutMenu);
 
-        return menuBar;
+        return aboutMenu;
     }
+
 
     /**
      * Builds the top configuration panel with extension selector,
@@ -206,7 +239,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         final JPanel dirPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         dirPanel.add(new JLabel("Directory to monitor:"));
         myDirectoryField = new JTextField(35);
-        myBrowseButton = new JButton("Browse");
+        final JButton myBrowseButton = new JButton("Browse");
 
         myBrowseButton.setBackground(Color.BLACK);
         myBrowseButton.setForeground(Color.WHITE);
@@ -423,9 +456,11 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
      */
     private void showAboutDialog() {
         JOptionPane.showMessageDialog(this,
-                "File System Watcher\n" +
-                        "Group Members: Jakita Kaur, Ibadat Sandhu, Balkirat Singh\n" +
-                        "Description: Monitors and logs file activity, with database querying and CSV export.",
+                """
+                File System Watcher
+                Group Members: Jakita Kaur, Ibadat Sandhu, Balkirat Singh
+                Description: Monitors and logs file activity, with database querying and CSV export.
+                """,
                 "About", JOptionPane.INFORMATION_MESSAGE);
     }
 
@@ -471,8 +506,8 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
             myEventsSaved = false;
             final FileEvent event = (FileEvent) evt.getNewValue();
             myFileEvents.add(event);
-            final String myFormattedDate = event.getEventTime().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));;
-            final String myFormattedTime = event.getEventTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));;
+            final String myFormattedDate = event.getEventTime().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
+            final String myFormattedTime = event.getEventTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
             myTableModel.addRow(new Object[]{
                     event.getFileName(),
                     event.getFilePath(),

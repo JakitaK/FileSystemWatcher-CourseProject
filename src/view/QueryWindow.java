@@ -446,4 +446,5 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
     @Override
     public void propertyChange(final PropertyChangeEvent evt) {
     }
+
 }
