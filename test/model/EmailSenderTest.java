@@ -1,7 +1,8 @@
 // EmailSenderTest.java
-package model;
+package test.model;
 
 import org.junit.jupiter.api.BeforeEach;
+import model.EmailSender;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
@@ -132,7 +133,6 @@ public class EmailSenderTest {
             logger.setLevel(originalLevel);  // 🔁 Restore original logging level
         }
     }
-
 
     @Test
     public void testSendEmailEndToEndWithoutMocks() {
