@@ -39,6 +39,7 @@ import java.util.Collections;
 public class QueryWindow extends JPanel implements PropertyChangeListener {
 
     /** Logger for robust exception catching */
+    @SuppressWarnings("unused")
     private static final Logger LOGGER = Logger.getLogger(QueryWindow.class.getName());
     /** Email sender implementation. */
     private final IEmailSender myEmailSender;
@@ -56,6 +57,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
      * @param db     the database manager to handle queries
      * @param sender the email sender implementation
      */
+    @SuppressWarnings("unused")
     public QueryWindow(final DatabaseManager db, final IEmailSender sender) {
 
         this.myEmailSender = sender;
@@ -304,6 +306,7 @@ public class QueryWindow extends JPanel implements PropertyChangeListener {
     /**
      * Exports the displayed query results to a CSV file and sends it by email.
      */
+    @SuppressWarnings("unused")
     private void emailQueryResults() {
         final JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Select CSV file to email");
