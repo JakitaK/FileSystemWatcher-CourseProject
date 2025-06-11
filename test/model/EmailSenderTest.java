@@ -1,6 +1,7 @@
 // EmailSenderTest.java
 package test.model;
 
+import org.junit.jupiter.api.BeforeEach;
 import model.EmailSender;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -10,27 +11,37 @@ import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class EmailSenderTest {
 
+    private EmailSender sender;
+
+    @BeforeEach
+    void setUp() {
+        sender = new EmailSender("filesystemwatcher360@gmail.com", "dayh umbg abut fyoj");
+    }
+
+
     @Test
     public void testBuildMessageWithoutAttachment() throws Exception {
-        EmailSender sender = new EmailSender("test@sender.com", "password");
+        //EmailSender sender = new EmailSender("test@sender.com", "password");
 
         // Use dummy session
         Session session = Session.getDefaultInstance(new Properties());
         MimeMessage msg = sender.buildMessage(session, "receiver@test.com", "Test", "Hello", null);
 
         assertEquals("Test", msg.getSubject());
-        assertEquals("test@sender.com", ((InternetAddress) msg.getFrom()[0]).getAddress());
+        assertEquals("filesystemwatcher360@gmail.com", ((InternetAddress) msg.getFrom()[0]).getAddress());
     }
 
     @Test
     public void testBuildMessageWithAttachment() throws Exception {
-        EmailSender sender = new EmailSender("test@sender.com", "password");
+        //EmailSender sender = new EmailSender("test@sender.com", "password");
 
         Session session = Session.getDefaultInstance(new Properties());
 
@@ -39,7 +50,7 @@ public class EmailSenderTest {
         MimeMessage msg = sender.buildMessage(session, "receiver@test.com", "With Attachment", "Body", path);
 
         assertEquals("With Attachment", msg.getSubject());
-        assertEquals("test@sender.com", ((InternetAddress) msg.getFrom()[0]).getAddress());
+        assertEquals("filesystemwatcher360@gmail.com", ((InternetAddress) msg.getFrom()[0]).getAddress());
     }
 
     @Test
@@ -53,7 +64,7 @@ public class EmailSenderTest {
 
     @Test
     public void testBuildMessageWithNullParams() {
-        EmailSender sender = new EmailSender("test@sender.com", "password");
+        //EmailSender sender = new EmailSender("test@sender.com", "password");
 
         Session session = Session.getDefaultInstance(new Properties());
 
@@ -63,7 +74,7 @@ public class EmailSenderTest {
 
     @Test
     public void testSendEmailCallsTransportSend() {
-        EmailSender sender = new EmailSender("test@sender.com", "password");
+        //EmailSender sender = new EmailSender("test@sender.com", "password");
 
         // Mock Transport.send()
         try (MockedStatic<Transport> mockedTransport = mockStatic(Transport.class)) {
@@ -77,7 +88,7 @@ public class EmailSenderTest {
 
     @Test
     public void testSendEmailWithAttachmentCallsTransportSend() {
-        EmailSender sender = new EmailSender("test@sender.com", "password");
+        //EmailSender sender = new EmailSender("test@sender.com", "password");
 
         // Replace with a real file path or create a dummy test file
         String path = "src/test/resources/sample.txt";
@@ -93,7 +104,7 @@ public class EmailSenderTest {
 
     @Test
     public void testSendEmailSuccess() {
-        EmailSender sender = new EmailSender("test@sender.com", "password");
+        //EmailSender sender = new EmailSender("test@sender.com", "password");
 
         try (MockedStatic<Transport> transportMock = mockStatic(Transport.class)) {
             // No exception thrown by Transport.send
@@ -106,25 +117,26 @@ public class EmailSenderTest {
     }
 
     @Test
-    public void testSendEmailLogsExceptionOnFailure() {
-        EmailSender sender = new EmailSender("test@sender.com", "password");
+    void testSendEmailLogsExceptionOnFailure() {
+        Logger logger = Logger.getLogger(EmailSender.class.getName());
+        Level originalLevel = logger.getLevel();
+        logger.setLevel(Level.OFF);  // 🔇 Temporarily silence logs
 
         try (MockedStatic<Transport> mockedTransport = mockStatic(Transport.class)) {
-            // Don't fail immediately — allow session/message creation
             mockedTransport.when(() -> Transport.send(any(MimeMessage.class)))
                     .thenThrow(new MessagingException("Simulated failure"));
 
-            // This triggers message creation and forces exception later
             assertDoesNotThrow(() -> sender.sendEmail("receiver@test.com", "Subject", "Body", null));
 
-            // Verifies Transport.send() was called once
             mockedTransport.verify(() -> Transport.send(any(MimeMessage.class)), times(1));
+        } finally {
+            logger.setLevel(originalLevel);  // 🔁 Restore original logging level
         }
     }
 
     @Test
     public void testSendEmailEndToEndWithoutMocks() {
-        EmailSender sender = new EmailSender("test@sender.com", "password");
+        //EmailSender sender = new EmailSender("test@sender.com", "password");
         // Call with all real values but let it silently fail due to bad creds (we don't care if email is sent)
         try {
             sender.sendEmail("receiver@test.com", "Real Test", "Hello world!", null);
