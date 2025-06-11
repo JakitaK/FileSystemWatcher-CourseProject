@@ -1,6 +1,7 @@
 // EmailSenderTest.java
-package model;
+package test.model;
 
+import model.EmailSender;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
