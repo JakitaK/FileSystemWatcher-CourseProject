@@ -66,14 +66,8 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
     /** Button to reset the screen. */
     private JButton myResetButton;
 
-    /** Table to display file event logs. */
-    private JTable myFileTable;
-
     /** Table model for the file event logs. */
     private DefaultTableModel myTableModel;
-
-    /** Label to display status messages. */
-    private final JLabel myStatusLabel;
 
     /** File monitor that watches the directory for changes. */
     FileMonitor myFileMonitor;
@@ -106,7 +100,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         mainPanel.add(tablePanel, BorderLayout.CENTER);
         add(mainPanel, BorderLayout.CENTER);
 
-        myStatusLabel = new JLabel("Database is connected.");
+        JLabel myStatusLabel = new JLabel("Database is connected.");
         myStatusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         add(myStatusLabel, BorderLayout.SOUTH);
     }
@@ -417,7 +411,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         myTableModel = new DefaultTableModel(new String[] {
                 "File Name", "Path","Extension","Event", "Date", "Time"
         }, 0);
-        myFileTable = new JTable(myTableModel);
+        JTable myFileTable = new JTable(myTableModel);
         myFileTable.setBackground(Color.WHITE);
 
         //Setting preferred column width
