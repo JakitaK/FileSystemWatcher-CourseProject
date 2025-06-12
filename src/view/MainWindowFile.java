@@ -113,7 +113,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
     private JMenuBar buildMenuBar() {
         final JMenuBar menuBar = new JMenuBar();
 
-        // Add all menus
+
         menuBar.add(createFileMenu());
         menuBar.add(createDatabaseMenu());
         menuBar.add(createAboutMenu());
@@ -169,6 +169,35 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
     private JMenu createAboutMenu() {
         final JMenu aboutMenu = new JMenu("Help");
 
+        final JMenuItem shortcutItem = getjMenuItem();
+
+        final JMenuItem aboutItem = new JMenuItem("About this app");
+        aboutItem.addActionListener(e -> showAboutDialog());
+
+        final JMenuItem tutorialItem = new JMenuItem("How to Use This App");
+        tutorialItem.addActionListener(e -> JOptionPane.showMessageDialog(this,
+                """
+                Step 1: Select the directory to monitor using the 'Browse' button.
+                Step 2: Choose the file extension filter (e.g., .txt, .java) or monitor all files.
+                Step 3: Click 'Start Monitoring' to begin tracking file changes.
+                Step 4: When you're done, click 'Stop Monitoring.'
+                Step 5: Click 'Save to Database' to store the events.
+                Step 6: Click 'Query Database' to view and filter your saved events.
+                Step 7: In the query window, you can also export results as CSV or email them.
+                Step 8: Use 'Reset Screen' if you want to clear current logs before starting again.
+                """,
+                "How to Use File System Watcher",
+                JOptionPane.INFORMATION_MESSAGE));
+
+        aboutMenu.add(shortcutItem);
+        aboutMenu.add(tutorialItem);
+        aboutMenu.add(aboutItem);
+
+
+        return aboutMenu;
+    }
+
+    private JMenuItem getjMenuItem() {
         final JMenuItem shortcutItem = new JMenuItem("Shortcuts");
         shortcutItem.addActionListener(e -> JOptionPane.showMessageDialog(this,
                 """
@@ -181,14 +210,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
                 """,
                 "Keyboard Shortcuts",
                 JOptionPane.INFORMATION_MESSAGE));
-
-        final JMenuItem aboutItem = new JMenuItem("About this app");
-        aboutItem.addActionListener(e -> showAboutDialog());
-
-        aboutMenu.add(shortcutItem);
-        aboutMenu.add(aboutItem);
-
-        return aboutMenu;
+        return shortcutItem;
     }
 
 
@@ -233,24 +255,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         final JPanel dirPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         dirPanel.add(new JLabel("Directory to monitor:"));
         myDirectoryField = new JTextField(35);
-        final JButton myBrowseButton = new JButton("Browse");
-
-        myBrowseButton.setBackground(Color.BLACK);
-        myBrowseButton.setForeground(Color.WHITE);
-        myBrowseButton.setFocusPainted(false);
-
-        myBrowseButton.addActionListener(e -> {
-            final JFileChooser chooser = new JFileChooser();
-            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                myDirectoryField.setText(chooser.getSelectedFile().getAbsolutePath());
-
-                JOptionPane.showMessageDialog(this,
-                        "Directory selected. Click Start Monitoring Button to begin tracking changes.",
-                        "Directory Selected",
-                        JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
+        final JButton myBrowseButton = getjButton();
 
         dirPanel.add(myDirectoryField);
         dirPanel.add(myBrowseButton);
@@ -400,6 +405,28 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         panel.add(dirPanel);
         panel.add(buttonPanel);
         return panel;
+    }
+
+    private JButton getjButton() {
+        final JButton myBrowseButton = new JButton("Browse");
+
+        myBrowseButton.setBackground(Color.BLACK);
+        myBrowseButton.setForeground(Color.WHITE);
+        myBrowseButton.setFocusPainted(false);
+
+        myBrowseButton.addActionListener(e -> {
+            final JFileChooser chooser = new JFileChooser();
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                myDirectoryField.setText(chooser.getSelectedFile().getAbsolutePath());
+
+                JOptionPane.showMessageDialog(this,
+                        "Directory selected. Click Start Monitoring Button to begin tracking changes.",
+                        "Directory Selected",
+                        JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        return myBrowseButton;
     }
 
     /**
