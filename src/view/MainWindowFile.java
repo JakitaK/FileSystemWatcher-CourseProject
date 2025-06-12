@@ -1,8 +1,8 @@
 /**
  * MainWindowFile.java
- *
+ * <p>
  * Part of the File Watcher Project.
- *
+ * </p>
  * This class is the main application window for the File System Watcher.
  * It provides a GUI that allows users to select directories to monitor for file changes,
  * start and stop monitoring, save events to the database, query events, and export data.
@@ -66,17 +66,8 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
     /** Button to reset the screen. */
     private JButton myResetButton;
 
-    /** Button to browse directories. */
-    private JButton myBrowseButton;
-
-    /** Table to display file event logs. */
-    private JTable myFileTable;
-
     /** Table model for the file event logs. */
     private DefaultTableModel myTableModel;
-
-    /** Label to display status messages. */
-    private JLabel myStatusLabel;
 
     /** File monitor that watches the directory for changes. */
     FileMonitor myFileMonitor;
@@ -92,7 +83,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         try {
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
         } catch (final Exception e) {
-            e.printStackTrace();
+            System.err.println("Error setting Look and Feel: " + e.getMessage());
         }
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -109,61 +100,119 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         mainPanel.add(tablePanel, BorderLayout.CENTER);
         add(mainPanel, BorderLayout.CENTER);
 
-        myStatusLabel = new JLabel("Database is connected.");
+        JLabel myStatusLabel = new JLabel("Database is connected.");
         myStatusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         add(myStatusLabel, BorderLayout.SOUTH);
     }
 
     /**
-     * Builds the menu bar with File, Database, and Help menus.
+     * Builds the menu bar for the main window.
      *
-     * @return the JMenuBar component
+     * @return the JMenuBar
      */
     private JMenuBar buildMenuBar() {
         final JMenuBar menuBar = new JMenuBar();
 
+
+        menuBar.add(createFileMenu());
+        menuBar.add(createDatabaseMenu());
+        menuBar.add(createAboutMenu());
+
+        return menuBar;
+    }
+
+    /**
+     * Creates the File menu with its menu items.
+     *
+     * @return the File JMenu
+     */
+    private JMenu createFileMenu() {
         final JMenu fileMenu = new JMenu("File");
+
         final JMenuItem startItem = new JMenuItem("Start");
         startItem.addActionListener(e -> myStartButton.doClick());
+
         final JMenuItem stopItem = new JMenuItem("Stop");
         stopItem.addActionListener(e -> myStopButton.doClick());
+
         final JMenuItem exitItem = new JMenuItem("Exit");
         exitItem.addActionListener(e -> dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING)));
+
         fileMenu.add(startItem);
         fileMenu.add(stopItem);
         fileMenu.addSeparator();
         fileMenu.add(exitItem);
-        menuBar.add(fileMenu);
 
+        return fileMenu;
+    }
 
-
+    /**
+     * Creates the Database menu with its menu items.
+     *
+     * @return the Database JMenu
+     */
+    private JMenu createDatabaseMenu() {
         final JMenu databaseMenu = new JMenu("Database");
+
         final JMenuItem queryItem = new JMenuItem("Query Database");
         queryItem.addActionListener(e -> myQueryButton.doClick());
         databaseMenu.add(queryItem);
-        menuBar.add(databaseMenu);
 
+        return databaseMenu;
+    }
+
+    /**
+     * Creates the Help menu with its menu items.
+     *
+     * @return the Help JMenu
+     */
+    private JMenu createAboutMenu() {
         final JMenu aboutMenu = new JMenu("Help");
-        final JMenuItem shortcutItem = new JMenuItem("Shortcuts");
-        shortcutItem.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this,
-                    "Keyboard Shortcuts:\n" +
-                            "Alt+T or Ctrl+T - Start Monitoring\n" +
-                            "Alt+P or Ctrl+P - Stop Monitoring\n" +
-                            "Alt+S or Ctrl+S - Save to Database\n" +
-                            "Alt+Q or Ctrl+Q - Query Database\n" +
-                            "Alt+R or Ctrl+R - Reset\n",
-                    "Keyboard Shortcuts",
-                    JOptionPane.INFORMATION_MESSAGE);
-        });
+
+        final JMenuItem shortcutItem = getjMenuItem();
+
         final JMenuItem aboutItem = new JMenuItem("About this app");
         aboutItem.addActionListener(e -> showAboutDialog());
-        aboutMenu.add(shortcutItem);
-        aboutMenu.add(aboutItem);
-        menuBar.add(aboutMenu);
 
-        return menuBar;
+        final JMenuItem tutorialItem = new JMenuItem("How to Use This App");
+        tutorialItem.addActionListener(e -> JOptionPane.showMessageDialog(this,
+                """
+                Step 1: Select the directory to monitor using the 'Browse' button.
+                Step 2: Choose the file extension filter (e.g., .txt, .java) or monitor all files.
+                Step 3: Click 'Start Monitoring' to begin tracking file changes.
+                Step 4: When you're done, click 'Stop Monitoring.'
+                Step 5: Click 'Save to Database' to store the events.
+                Step 6: Click 'Query Database' to view and filter your saved events.
+                Step 7: In the query window, you can also export results as CSV or email them.
+                Step 8: Use 'Reset Screen' if you want to clear current logs before starting again.
+                """,
+                "How to Use File System Watcher",
+                JOptionPane.INFORMATION_MESSAGE));
+
+        aboutMenu.add(shortcutItem);
+        aboutMenu.add(tutorialItem);
+        aboutMenu.add(aboutItem);
+
+
+        return aboutMenu;
     }
+
+    private JMenuItem getjMenuItem() {
+        final JMenuItem shortcutItem = new JMenuItem("Shortcuts");
+        shortcutItem.addActionListener(e -> JOptionPane.showMessageDialog(this,
+                """
+                Keyboard Shortcuts:
+                Alt+T or Ctrl+T - Start Monitoring
+                Alt+P or Ctrl+P - Stop Monitoring
+                Alt+S or Ctrl+S - Save to Database
+                Alt+Q or Ctrl+Q - Query Database
+                Alt+R or Ctrl+R - Reset
+                """,
+                "Keyboard Shortcuts",
+                JOptionPane.INFORMATION_MESSAGE));
+        return shortcutItem;
+    }
+
 
     /**
      * Builds the top configuration panel with extension selector,
@@ -206,24 +255,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         final JPanel dirPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         dirPanel.add(new JLabel("Directory to monitor:"));
         myDirectoryField = new JTextField(35);
-        myBrowseButton = new JButton("Browse");
-
-        myBrowseButton.setBackground(Color.BLACK);
-        myBrowseButton.setForeground(Color.WHITE);
-        myBrowseButton.setFocusPainted(false);
-
-        myBrowseButton.addActionListener(e -> {
-            final JFileChooser chooser = new JFileChooser();
-            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                myDirectoryField.setText(chooser.getSelectedFile().getAbsolutePath());
-
-                JOptionPane.showMessageDialog(this,
-                        "Directory selected. Click Start Monitoring Button to begin tracking changes.",
-                        "Directory Selected",
-                        JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
+        final JButton myBrowseButton = getjButton();
 
         dirPanel.add(myDirectoryField);
         dirPanel.add(myBrowseButton);
@@ -375,6 +407,28 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         return panel;
     }
 
+    private JButton getjButton() {
+        final JButton myBrowseButton = new JButton("Browse");
+
+        myBrowseButton.setBackground(Color.BLACK);
+        myBrowseButton.setForeground(Color.WHITE);
+        myBrowseButton.setFocusPainted(false);
+
+        myBrowseButton.addActionListener(e -> {
+            final JFileChooser chooser = new JFileChooser();
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                myDirectoryField.setText(chooser.getSelectedFile().getAbsolutePath());
+
+                JOptionPane.showMessageDialog(this,
+                        "Directory selected. Click Start Monitoring Button to begin tracking changes.",
+                        "Directory Selected",
+                        JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        return myBrowseButton;
+    }
+
     /**
      * Builds the scrollable table panel for file watcher events.
      *
@@ -384,7 +438,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
         myTableModel = new DefaultTableModel(new String[] {
                 "File Name", "Path","Extension","Event", "Date", "Time"
         }, 0);
-        myFileTable = new JTable(myTableModel);
+        JTable myFileTable = new JTable(myTableModel);
         myFileTable.setBackground(Color.WHITE);
 
         //Setting preferred column width
@@ -423,9 +477,11 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
      */
     private void showAboutDialog() {
         JOptionPane.showMessageDialog(this,
-                "File System Watcher\n" +
-                        "Group Members: Jakita Kaur, Ibadat Sandhu, Balkirat Singh\n" +
-                        "Description: Monitors and logs file activity, with database querying and CSV export.",
+                """
+                File System Watcher
+                Group Members: Jakita Kaur, Ibadat Sandhu, Balkirat Singh
+                Description: Monitors and logs file activity, with database querying and CSV export.
+                """,
                 "About", JOptionPane.INFORMATION_MESSAGE);
     }
 
@@ -471,8 +527,8 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
             myEventsSaved = false;
             final FileEvent event = (FileEvent) evt.getNewValue();
             myFileEvents.add(event);
-            final String myFormattedDate = event.getEventTime().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));;
-            final String myFormattedTime = event.getEventTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));;
+            final String myFormattedDate = event.getEventTime().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
+            final String myFormattedTime = event.getEventTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
             myTableModel.addRow(new Object[]{
                     event.getFileName(),
                     event.getFilePath(),

@@ -1,4 +1,4 @@
-package model;
+package test.model;
 
 import model.DatabaseManager;
 import model.FileEvent;
