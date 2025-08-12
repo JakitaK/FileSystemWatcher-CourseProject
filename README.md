@@ -57,14 +57,6 @@ This project was developed as part of **TCSS 360 – Software Development & Qual
 - **Tools:** IntelliJ IDEA, JUnit, Checkstyle  
 - **Architecture & Patterns:** MVC, Observer Pattern, Interface Abstraction  
 
----
-
-## 👩‍💻 My Contributions
-- Designed and implemented **QueryWindow** GUI, event filtering, and CSV export functionality.  
-- Integrated email sending feature using **JavaMail API** + **Gmail SMTP** (with TLS encryption).  
-- Developed core classes: `QueryWindow`, `FileEvent`, `EmailSender`, `IEmailSender`.  
-- Wrote **JUnit test cases** for email and export features.  
-- Applied **MVC architecture** and **Observer pattern** for modularity and maintainability.  
 
 ---
 
