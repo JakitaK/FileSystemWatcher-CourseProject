@@ -1,0 +1,586 @@
+/**
+ * MainWindowFile.java
+ * <p>
+ * Part of the File Watcher Project.
+ * </p>
+ * This class is the main application window for the File System Watcher.
+ * It provides a GUI that allows users to select directories to monitor for file changes,
+ * start and stop monitoring, save events to the database, query events, and export data.
+ * It also implements keyboard shortcuts, menu items, and integrates with the QueryWindow for queries.
+ *
+ * @author Ibadat Sandhu, Jakita Kaur, Balkirat Singh
+ * @version Spring Quarter
+ */
+
+package view;
+import model.EmailSender;
+import model.FileEvent;
+import model.DatabaseManager;
+import controller.FileMonitor;
+import model.IEmailSender;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.time.format.DateTimeFormatter;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import java.awt.*;
+import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.List;
+import java.io.IOException;
+
+/**
+ * MainWindowFile is the main application window for the File System Watcher project.
+ * It provides a GUI for selecting directories, starting and stopping monitoring,
+ * saving file events to the database, querying the database, and displaying file event logs.
+ */
+public class MainWindowFile extends JFrame implements PropertyChangeListener {
+
+    /** Dropdown selector for file extensions to monitor. */
+    private JComboBox<String> myExtensionComboBox;
+
+    /** Flag indicating whether events have been saved to the database. */
+    private boolean myEventsSaved = true;
+
+    /** Text field to display the directory path being monitored. */
+    private JTextField myDirectoryField;
+
+    /** Button to start monitoring. */
+    private JButton myStartButton;
+
+    /** Button to stop monitoring. */
+    private JButton myStopButton;
+
+    /** Button to save events to the database. */
+    private JButton mySaveButton;
+
+    /** Button to open the database query window. */
+    private JButton myQueryButton;
+
+    /** Button to reset the screen. */
+    private JButton myResetButton;
+
+    /** Table model for the file event logs. */
+    private DefaultTableModel myTableModel;
+
+    /** File monitor that watches the directory for changes. */
+    FileMonitor myFileMonitor;
+
+    /** List of file events collected during monitoring. */
+    private final List<FileEvent> myFileEvents = new ArrayList<>();
+
+    /**
+     * Constructs the main window UI for the file watcher.
+     */
+    public MainWindowFile() {
+        super("File System Watcher");
+        try {
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+        } catch (final Exception e) {
+            System.err.println("Error setting Look and Feel: " + e.getMessage());
+        }
+
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+        setSize(1100, 600);
+        setLocationRelativeTo(null);
+        setJMenuBar(buildMenuBar());
+
+        final JPanel mainPanel = new JPanel(new BorderLayout());
+        final JPanel configPanel = buildConfigPanel();
+        final JScrollPane tablePanel = buildTablePanel();
+
+        mainPanel.add(configPanel, BorderLayout.NORTH);
+        mainPanel.add(tablePanel, BorderLayout.CENTER);
+        add(mainPanel, BorderLayout.CENTER);
+
+        JLabel myStatusLabel = new JLabel("Database is connected.");
+        myStatusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        add(myStatusLabel, BorderLayout.SOUTH);
+    }
+
+    /**
+     * Builds the menu bar for the main window.
+     *
+     * @return the JMenuBar
+     */
+    private JMenuBar buildMenuBar() {
+        final JMenuBar menuBar = new JMenuBar();
+
+
+        menuBar.add(createFileMenu());
+        menuBar.add(createDatabaseMenu());
+        menuBar.add(createAboutMenu());
+
+        return menuBar;
+    }
+
+    /**
+     * Creates the File menu with its menu items.
+     *
+     * @return the File JMenu
+     */
+    private JMenu createFileMenu() {
+        final JMenu fileMenu = new JMenu("File");
+
+        final JMenuItem startItem = new JMenuItem("Start");
+        startItem.addActionListener(e -> myStartButton.doClick());
+
+        final JMenuItem stopItem = new JMenuItem("Stop");
+        stopItem.addActionListener(e -> myStopButton.doClick());
+
+        final JMenuItem exitItem = new JMenuItem("Exit");
+        exitItem.addActionListener(e -> dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING)));
+
+        fileMenu.add(startItem);
+        fileMenu.add(stopItem);
+        fileMenu.addSeparator();
+        fileMenu.add(exitItem);
+
+        return fileMenu;
+    }
+
+    /**
+     * Creates the Database menu with its menu items.
+     *
+     * @return the Database JMenu
+     */
+    private JMenu createDatabaseMenu() {
+        final JMenu databaseMenu = new JMenu("Database");
+
+        final JMenuItem queryItem = new JMenuItem("Query Database");
+        queryItem.addActionListener(e -> myQueryButton.doClick());
+        databaseMenu.add(queryItem);
+
+        return databaseMenu;
+    }
+
+    /**
+     * Creates the Help menu with its menu items.
+     *
+     * @return the Help JMenu
+     */
+    private JMenu createAboutMenu() {
+        final JMenu aboutMenu = new JMenu("Help");
+
+        final JMenuItem shortcutItem = getjMenuItem();
+
+        final JMenuItem aboutItem = new JMenuItem("About this app");
+        aboutItem.addActionListener(e -> showAboutDialog());
+
+        final JMenuItem tutorialItem = new JMenuItem("How to Use This App");
+        tutorialItem.addActionListener(e -> JOptionPane.showMessageDialog(this,
+                """
+                Step 1: Select the directory to monitor using the 'Browse' button.
+                Step 2: Choose the file extension filter (e.g., .txt, .java) or monitor all files.
+                Step 3: Click 'Start Monitoring' to begin tracking file changes.
+                Step 4: When you're done, click 'Stop Monitoring.'
+                Step 5: Click 'Save to Database' to store the events.
+                Step 6: Click 'Query Database' to view and filter your saved events.
+                Step 7: In the query window, you can also export results as CSV or email them.
+                Step 8: Use 'Reset Screen' if you want to clear current logs before starting again.
+                """,
+                "How to Use File System Watcher",
+                JOptionPane.INFORMATION_MESSAGE));
+
+        aboutMenu.add(shortcutItem);
+        aboutMenu.add(tutorialItem);
+        aboutMenu.add(aboutItem);
+
+
+        return aboutMenu;
+    }
+
+    private JMenuItem getjMenuItem() {
+        final JMenuItem shortcutItem = new JMenuItem("Shortcuts");
+        shortcutItem.addActionListener(e -> JOptionPane.showMessageDialog(this,
+                """
+                Keyboard Shortcuts:
+                Alt+T or Ctrl+T - Start Monitoring
+                Alt+P or Ctrl+P - Stop Monitoring
+                Alt+S or Ctrl+S - Save to Database
+                Alt+Q or Ctrl+Q - Query Database
+                Alt+R or Ctrl+R - Reset
+                """,
+                "Keyboard Shortcuts",
+                JOptionPane.INFORMATION_MESSAGE));
+        return shortcutItem;
+    }
+
+
+    /**
+     * Builds the top configuration panel with extension selector,
+     * directory field, and control buttons.
+     *
+     * @return the configuration panel
+     */
+    private JPanel buildConfigPanel() {
+        final JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        final JPanel extensionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        extensionPanel.add(new JLabel("Monitor by extension:"));
+        myExtensionComboBox = new JComboBox<>(new String[] {
+                "All extensions", "Custom extension",".txt", ".java", ".pdf", ".doc", ".png", ".log"
+        });
+
+        myExtensionComboBox.setBackground(Color.WHITE);
+
+        myExtensionComboBox.addActionListener(e -> {
+            final String selected = (String) myExtensionComboBox.getSelectedItem();
+            if ("Custom extension".equals(selected)) {
+                final String input = JOptionPane.showInputDialog(this,
+                        "Enter your custom file extension (e.g., .log, .csv):",
+                        ".custom");
+                if (input != null && input.startsWith(".")) {
+                    myExtensionComboBox.insertItemAt(input, 2);
+                    myExtensionComboBox.setSelectedItem(input);
+                } else if (input != null) {
+                    JOptionPane.showMessageDialog(this,
+                            "Invalid extension. It should start with a dot (e.g., .csv).",
+                            "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                    myExtensionComboBox.setSelectedIndex(0);
+                }
+            }
+        });
+
+        extensionPanel.add(myExtensionComboBox);
+
+        final JPanel dirPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        dirPanel.add(new JLabel("Directory to monitor:"));
+        myDirectoryField = new JTextField(35);
+        final JButton myBrowseButton = getjButton();
+
+        dirPanel.add(myDirectoryField);
+        dirPanel.add(myBrowseButton);
+
+        final JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
+        myStartButton = new JButton("Start Monitoring");
+        myStopButton = new JButton("Stop Monitoring");
+        mySaveButton = new JButton("Save to Database");
+        myQueryButton = new JButton("Query Database");
+        myResetButton = new JButton("Reset Screen");
+
+        myStartButton.setMnemonic(KeyEvent.VK_T);
+        myStopButton.setMnemonic(KeyEvent.VK_P);
+        mySaveButton.setMnemonic(KeyEvent.VK_S);
+        myQueryButton.setMnemonic(KeyEvent.VK_Q);
+        myResetButton.setMnemonic(KeyEvent.VK_R);
+
+        myStartButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK), "startMonitoring");
+        myStartButton.getActionMap().put("startMonitoring", new AbstractAction() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                myStartButton.doClick();
+            }
+        });
+
+        myStopButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK), "stopMonitoring");
+        myStopButton.getActionMap().put("stopMonitoring", new AbstractAction() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                myStopButton.doClick();
+            }
+        });
+
+        mySaveButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK), "saveDatabase");
+        mySaveButton.getActionMap().put("saveDatabase", new AbstractAction() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                mySaveButton.doClick();
+            }
+        });
+
+        myQueryButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK), "queryDatabase");
+        myQueryButton.getActionMap().put("queryDatabase", new AbstractAction() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                myQueryButton.doClick();
+            }
+        });
+
+        myResetButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK), "resetScreen");
+        myResetButton.getActionMap().put("resetScreen", new AbstractAction() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                myResetButton.doClick();
+            }
+        });
+
+
+
+
+        final JButton[] buttons = { myStartButton, myStopButton, mySaveButton, myQueryButton, myResetButton };
+        for (final JButton button : buttons) {
+            button.setBackground(Color.BLACK);
+            button.setForeground(Color.WHITE);
+            button.setPreferredSize(new Dimension(160, 35));
+            buttonPanel.add(button);
+        }
+
+        myStopButton.setEnabled(false);
+
+        myStartButton.addActionListener(e -> {
+            try {
+                final String dir = myDirectoryField.getText();
+                final List<String> extensions = new ArrayList<>();
+                final String selected = (String) myExtensionComboBox.getSelectedItem();
+                if (selected != null && !selected.equals("All extensions")) {
+                    extensions.add(selected);
+                }
+                myFileMonitor = new FileMonitor(extensions);
+                myFileMonitor.addPropertyChangeListener(this);
+                myFileMonitor.startMonitoring(dir);
+
+                JOptionPane.showMessageDialog(this,
+                        "Files in the directory are now being monitored.",
+                        "Monitoring Started",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+
+                myStartButton.setEnabled(false);
+                myStopButton.setEnabled(true);
+            } catch (final IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error starting monitor: " + ex.getMessage());
+            }
+        });
+
+        myStopButton.addActionListener(e -> {
+            try {
+                if (myFileMonitor != null) {
+                    myFileMonitor.stopMonitoring();
+                    myStartButton.setEnabled(true);
+                    myStopButton.setEnabled(false);
+
+                    JOptionPane.showMessageDialog(this,
+                            "Monitoring has been stopped. The program is no longer observing the selected directory.",
+                            "Monitoring Stopped",
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
+            } catch (final IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error stopping monitor: " + ex.getMessage());
+            }
+        });
+
+
+        myResetButton.addActionListener(e -> {
+            int result = JOptionPane.showConfirmDialog(this,
+                    "Are you sure you want to reset the file events?",
+                    "Confirm Reset", JOptionPane.YES_NO_OPTION);
+            if (result == JOptionPane.YES_OPTION) {
+                myFileEvents.clear();
+                myTableModel.setRowCount(0);
+            }
+        });
+
+        mySaveButton.addActionListener(e -> {
+            if (myFileEvents.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No file events to save.");
+                return;
+            }
+
+            final DatabaseManager db = new DatabaseManager("data/file_events.db");
+            db.insertFileEvents(myFileEvents);
+            myEventsSaved = true;
+            db.close();
+
+            JOptionPane.showMessageDialog(this, "File events saved to database.");
+        });
+
+
+        myQueryButton.addActionListener(e -> openQueryWindow());
+
+        panel.add(extensionPanel);
+        panel.add(dirPanel);
+        panel.add(buttonPanel);
+        return panel;
+    }
+
+    private JButton getjButton() {
+        final JButton myBrowseButton = new JButton("Browse");
+
+        myBrowseButton.setBackground(Color.BLACK);
+        myBrowseButton.setForeground(Color.WHITE);
+        myBrowseButton.setFocusPainted(false);
+
+        myBrowseButton.addActionListener(e -> {
+            final JFileChooser chooser = new JFileChooser();
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                myDirectoryField.setText(chooser.getSelectedFile().getAbsolutePath());
+
+                JOptionPane.showMessageDialog(this,
+                        "Directory selected. Click Start Monitoring Button to begin tracking changes.",
+                        "Directory Selected",
+                        JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        return myBrowseButton;
+    }
+
+    /**
+     * Builds the scrollable table panel for file watcher events.
+     *
+     * @return a JScrollPane wrapping the table
+     */
+    private JScrollPane buildTablePanel() {
+
+        myTableModel = new DefaultTableModel(new String[] {
+                "File Name", "Path","Extension","Event", "Date", "Time"
+        }, 0);
+        JTable myFileTable = new JTable(myTableModel);
+        myFileTable.setBackground(Color.WHITE);
+
+        //Setting preferred column width
+        myFileTable.getColumnModel().getColumn(0).setPreferredWidth(200); // File Name
+        myFileTable.getColumnModel().getColumn(1).setPreferredWidth(400); // Path
+        myFileTable.getColumnModel().getColumn(2).setPreferredWidth(100);  // Extension
+        myFileTable.getColumnModel().getColumn(3).setPreferredWidth(90);  // Date
+        myFileTable.getColumnModel().getColumn(4).setPreferredWidth(90);  // Time
+
+        DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
+        leftRenderer.setHorizontalAlignment(SwingConstants.LEFT);
+        for (int i = 0; i < myFileTable.getColumnCount(); i++) {
+            myFileTable.getColumnModel().getColumn(i).setCellRenderer(leftRenderer);
+        }
+
+        final JTableHeader header = myFileTable.getTableHeader();
+        header.setBackground(Color.WHITE);
+        DefaultTableCellRenderer headerRenderer = (DefaultTableCellRenderer) header.getDefaultRenderer();
+        headerRenderer.setHorizontalAlignment(SwingConstants.LEFT);
+
+        final JScrollPane scrollPane = new JScrollPane(myFileTable);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+
+        final JPanel tableWrapper = new JPanel(new BorderLayout());
+        final JLabel titleLabel = new JLabel("File System Watcher Events", SwingConstants.LEFT);
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 10));
+        tableWrapper.add(titleLabel, BorderLayout.NORTH);
+        tableWrapper.add(scrollPane, BorderLayout.CENTER);
+
+        return new JScrollPane(tableWrapper);
+    }
+
+    /**
+     * Displays an about dialog with group member information and description.
+     */
+    private void showAboutDialog() {
+        JOptionPane.showMessageDialog(this,
+                """
+                File System Watcher
+                Group Members: Jakita Kaur, Ibadat Sandhu, Balkirat Singh
+                Description: Monitors and logs file activity, with database querying and CSV export.
+                """,
+                "About", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    /**
+     * Opens the database query window in a new frame.
+     */
+    private void openQueryWindow() {
+        final IEmailSender emailSender = new EmailSender("filesystemwatcher360@gmail.com", "dayh umbg abut fyoj");
+        final DatabaseManager dbManager = new DatabaseManager("data/file_events.db");
+        final QueryWindow queryWindow = new QueryWindow(dbManager, emailSender);
+        final JFrame queryFrame = new JFrame("Query Window");
+        queryFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        queryFrame.setContentPane(queryWindow);
+        queryFrame.setSize(900, 500);
+        queryFrame.setLocationRelativeTo(this);
+        queryFrame.setVisible(true);
+    }
+
+    /**
+     * Converts a raw event type (e.g., ENTRY_CREATE) into a user-friendly string.
+     *
+     * @param rawType the raw event type string
+     * @return the formatted event type string
+     */
+    private String formatEventType(final String rawType) {
+        return switch (rawType) {
+            case "ENTRY_CREATE" -> "Created";
+            case "ENTRY_MODIFY" -> "Modified";
+            case "ENTRY_DELETE" -> "Deleted";
+            default -> rawType;
+        };
+    }
+
+    /**
+     * Handles property change events fired by the FileMonitor.
+     * Updates the table and internal data structures with the new file event.
+     *
+     * @param evt the property change event
+     */
+    @Override
+    public void propertyChange(final PropertyChangeEvent evt) {
+        if ("fileEvent".equals(evt.getPropertyName())) {
+            myEventsSaved = false;
+            final FileEvent event = (FileEvent) evt.getNewValue();
+            myFileEvents.add(event);
+            final String myFormattedDate = event.getEventTime().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
+            final String myFormattedTime = event.getEventTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+            myTableModel.addRow(new Object[]{
+                    event.getFileName(),
+                    event.getFilePath(),
+                    event.getFileExtension(),
+                    formatEventType(event.getEventType()),
+                    myFormattedDate,
+                    myFormattedTime,
+
+            });
+        }
+
+    }
+    /**
+     * Handles window events, including prompting the user to save unsaved events
+     * before closing the application.
+     *
+     * @param e the window event
+     */
+    @Override
+    protected void processWindowEvent(final WindowEvent e) {
+        if (e.getID() == WindowEvent.WINDOW_CLOSING) {
+
+            final int confirmExit = JOptionPane.showConfirmDialog(this,
+                    "Are you sure you want to exit the application?",
+                    "Confirm Exit",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
+
+            if (confirmExit != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+
+            if (!myEventsSaved && !myFileEvents.isEmpty()) {
+                final int result = JOptionPane.showConfirmDialog(this,
+                        "You have unsaved file events. Do you want to save them before exiting?",
+                        "Save before exit?", JOptionPane.YES_NO_CANCEL_OPTION);
+
+                if (result == JOptionPane.CANCEL_OPTION) {
+                    return;
+                } else if (result == JOptionPane.YES_OPTION) {
+                    DatabaseManager db = new DatabaseManager("data/file_events.db");
+                    db.insertFileEvents(myFileEvents);
+                    db.close();
+                    myEventsSaved = true;
+                }
+            }
+        }
+
+        super.processWindowEvent(e);
+    }
+
+
+}
