@@ -38,6 +38,7 @@ import java.util.Collections;
 
 public class QueryWindow extends JPanel implements PropertyChangeListener {
 
+
     /** Logger for robust exception catching */
     @SuppressWarnings("unused")
     private static final Logger LOGGER = Logger.getLogger(QueryWindow.class.getName());

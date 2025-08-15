@@ -11,7 +11,7 @@ import java.awt.*;
  * @author Ibadat Sandhu, Jakita Kaur and Balkirat Singh
  * @version Spring Quarter
  */
-public class FileSystemMain {
+public class FileSystemMain{
 
     /**
      * The main method launches the File System Watcher GUI.

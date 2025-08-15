@@ -19,7 +19,6 @@ import java.util.concurrent.Executors;
  * @version Spring Quarter
  */
 public class FileMonitor {
-
     private WatchService myWatcher;
     private boolean myMonitoring;
     private ExecutorService myExecutor;

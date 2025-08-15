@@ -435,6 +435,7 @@ public class MainWindowFile extends JFrame implements PropertyChangeListener {
      * @return a JScrollPane wrapping the table
      */
     private JScrollPane buildTablePanel() {
+
         myTableModel = new DefaultTableModel(new String[] {
                 "File Name", "Path","Extension","Event", "Date", "Time"
         }, 0);

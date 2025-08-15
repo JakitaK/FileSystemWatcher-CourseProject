@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter;
  * Represents a single file event, containing details like file name, path, extension,
  * event type, and the time of the event.
  */
-public class FileEvent {
+public class FileEvent  {
 
     /** The name of the file. */
     private final String myFileName;
@@ -36,7 +36,6 @@ public class FileEvent {
     private final LocalDateTime myEventTime;
 
 
-
     /**
      * Constructs a new FileEvent object with the specified details.
      *
@@ -46,6 +45,7 @@ public class FileEvent {
      * @param theEventType     the type of event (ENTRY_CREATE, etc.)
      * @param theEventTime     the timestamp of the event
      */
+
     public FileEvent (final String theFileName, final String theFilePath, final String theFileExtension, final String theEventType, final LocalDateTime theEventTime ) {
         this.myFileName = theFileName;
         this.myFilePath = theFilePath;

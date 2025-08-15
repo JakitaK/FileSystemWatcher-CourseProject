@@ -12,6 +12,7 @@ import java.util.logging.Logger;
  * inserting events, and executing queries.
  */
 public class DatabaseManager {
+
     /** Logger for the class. */
     private static final Logger LOGGER = Logger.getLogger(DatabaseManager.class.getName());
 

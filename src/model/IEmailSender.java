@@ -23,5 +23,6 @@ public interface IEmailSender {
      * @param theBody           the email body text
      * @param theAttachmentPath the file path to the attachment to include
      */
+
     void sendEmail(final String theRecipientEmail, final String theSubject, final String theBody, final String theAttachmentPath) throws Exception;
 }

@@ -100,6 +100,7 @@ public class EmailSender implements IEmailSender {
      * @param theBody            message body
      * @param theAttachmentPath  optional path to attachment file (null if none)
      */
+
     @Override
     public void sendEmail(final String theTo, final String theSubject, final String theBody, final String theAttachmentPath) {
         try {
